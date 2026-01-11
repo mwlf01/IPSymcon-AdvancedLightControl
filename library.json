@@ -1,0 +1,12 @@
+{
+    "id": "{A9F7FE5C-4F52-6F6D-F2B9-47F475BF4D41}",
+    "name": "AdvancedLightControl",
+    "author": "mwlf01",
+    "url": "https://github.com/mwlf01/IPSymcon-AdvancedLightControl",
+    "compatibility": {
+        "version": "7.0"
+    },
+    "version": "1.0.0",
+    "build": 1,
+    "date": 20260111
+}
