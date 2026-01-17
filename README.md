@@ -19,11 +19,9 @@ A powerful IP-Symcon module for centralized control of multiple lights with auto
   - [Light Switches](#light-switches)
   - [Presence Detection](#presence-detection)
   - [Brightness Control](#brightness-control)
-  - [Auto-Off Settings](#auto-off-settings)
+  - [Notifications](#notifications)
   - [Tile Visualizations](#tile-visualizations)
-  - [Visualization Visibility](#visualization-visibility)
-  - [User Configuration Permissions](#user-configuration-permissions)
-- [Visualization](#visualization)
+- [Variables](#variables)
 - [PHP Functions](#php-functions)
 - [License](#license)
 
@@ -52,10 +50,9 @@ A powerful IP-Symcon module for centralized control of multiple lights with auto
   - Notifications before auto-off via Tile Visualization
   - Customizable light name and location in notifications
   - Support for multiple Tile Visualizations
-- **Flexible Visibility & Permissions**:
-  - Show or hide individual controls in the visualization
-  - Per-feature user configuration permissions
-  - Conditional variables (only created when feature is enabled)
+- **User-Controlled Features**:
+  - All features can be enabled/disabled by users via variables in the visualization
+  - All settings adjustable at runtime without configuration changes
 
 ---
 
@@ -120,7 +117,6 @@ Connect physical switches to control the lights:
 
 | Setting | Description |
 |---------|-------------|
-| **Enable Light Switches** | Enable/disable the light switch feature |
 | **Switch Mode** | How switches are interpreted (see below) |
 | **Switch Variable** | Select a boolean variable from a switch |
 | **Name** | Optional friendly name for identification |
@@ -130,15 +126,15 @@ Connect physical switches to control the lights:
 - **Toggle on any change**: Any state change toggles lights
 - **On-only (staircase)**: Only turns lights on (useful with auto-off)
 
+**Note:** Enable/disable light switches via the "Light Switches" variable in the visualization.
+
 ### Presence Detection
 
-Automatically control lights based on presence:
+Configure presence detectors for automatic light control:
 
-| Setting | Description | Default |
-|---------|-------------|---------|
-| **Enable Presence Detection** | Enable/disable presence-based control | Off |
-| **Presence Detectors** | List of boolean presence detector variables | - |
-| **Follow-Up Time (s)** | Seconds to wait after presence ends before turning off | 60 |
+| Setting | Description |
+|---------|-------------|
+| **Presence Detectors** | List of boolean presence detector variables |
 
 **Behavior:**
 - Lights turn on when ANY detector reports presence (OR logic)
@@ -146,30 +142,26 @@ Automatically control lights based on presence:
 - Manual switch-on is tracked separately (presence won't turn off manually activated lights)
 - After auto-off, presence must go false before it can trigger lights again
 
+**Note:** Enable/disable and adjust follow-up time via variables in the visualization.
+
 ### Brightness Control
 
-Only turn on lights when it's dark enough:
+Configure the brightness sensor:
 
-| Setting | Description | Default |
-|---------|-------------|---------|
-| **Enable Brightness Control** | Enable/disable brightness-based control | Off |
-| **Brightness Sensor Variable** | Integer or float variable with lux value | - |
-| **Brightness Threshold (lux)** | Lights only turn on below this value | 100 |
+| Setting | Description |
+|---------|-------------|
+| **Brightness Sensor Variable** | Integer or float variable with lux value |
 
-### Auto-Off Settings
+**Note:** Enable/disable and adjust threshold via variables in the visualization.
 
-Configure the automatic switch-off feature:
+### Notifications
 
-| Setting | Description | Default |
-|---------|-------------|---------|
-| **Enable Auto-Off Feature** | Enable/disable the entire auto-off functionality | Off |
-| **Auto-Off Time (s)** | Time in seconds until automatic switch-off (1-172800) | 300 |
-| **Enable Push Notifications** | Send notifications before auto-off triggers | Off |
-| **Notification Threshold (s)** | Seconds before auto-off to send notification | 60 |
-| **Light Name** | Name for push notifications (e.g., "Ceiling Light") | - |
-| **Light Location** | Location for push notifications (e.g., "Living Room") | - |
+Configure notification settings for auto-off warnings:
 
-**Note**: Auto-off takes priority over presence detection. When auto-off triggers, presence must go false before it can turn lights on again.
+| Setting | Description |
+|---------|-------------|
+| **Light Name** | Name for push notifications (e.g., "Ceiling Light") |
+| **Light Location** | Location for push notifications (e.g., "Living Room") |
 
 ### Tile Visualizations
 
@@ -181,76 +173,41 @@ Register Tile Visualization instances for push notifications:
 
 You can register multiple Tile Visualizations. All registered visualizations will receive push notifications when the remaining time drops below the configured threshold.
 
-### Visualization Visibility
-
-Control which elements are visible in the visualization:
-
-| Setting | Description |
-|---------|-------------|
-| **Show Master Switch** | Display the main on/off switch |
-| **Show Light Switches Toggle** | Display the switches enable/disable toggle |
-| **Show Presence Toggle** | Display the presence detection toggle |
-| **Show Presence Follow-Up Time** | Display the follow-up time setting |
-| **Show Brightness Toggle** | Display the brightness control toggle |
-| **Show Brightness Threshold** | Display the brightness threshold setting |
-| **Show Auto-Off Toggle** | Display the auto-off enable/disable toggle |
-| **Show Auto-Off Time Setting** | Display the timeout configuration |
-| **Show Remaining Time** | Display the countdown timer |
-| **Show Extend Timer Button** | Display the timer reset button |
-| **Show Notification Toggle** | Display the notification toggle |
-| **Show Notification Threshold** | Display the notification threshold setting |
-
-### User Configuration Permissions
-
-Control what users can change via the visualization:
-
-| Setting | Description |
-|---------|-------------|
-| **Allow Light Switches Toggle** | Users can enable/disable light switches |
-| **Allow Presence Toggle** | Users can enable/disable presence detection |
-| **Allow Brightness Toggle** | Users can enable/disable brightness control |
-| **Allow Brightness Threshold** | Users can adjust the brightness threshold |
-| **Allow Auto-Off Toggle** | Users can toggle auto-off on/off |
-| **Allow Auto-Off Time** | Users can adjust the timeout |
-| **Allow Extending Timer** | Users can reset/extend the timer |
-| **Allow Notifications Toggle** | Users can toggle notifications on/off |
-| **Allow Notification Threshold** | Users can adjust the notification threshold |
-
-When a permission is disabled, the control is visible but read-only.
-
-**Note:** User changes made via visualization are automatically synced back to the instance configuration. This means changes persist and are not lost when the admin makes other configuration changes.
-
 ---
 
-## Visualization
+## Variables
 
-The module creates the following variables (conditional based on enabled features):
+The module creates the following variables (all always available):
 
 | Variable | Type | Description |
 |----------|------|-------------|
 | **All Lights** | Boolean | Master switch to control all lamps |
-| **Light Switches Enabled** | Boolean | Toggle for light switch feature |
-| **Presence Enabled** | Boolean | Toggle for presence detection |
-| **Presence Follow-Up Time** | Integer | Seconds to wait after presence ends |
-| **Brightness Enabled** | Boolean | Toggle for brightness control |
-| **Brightness Threshold** | Integer | Lux threshold for presence activation |
-| **Auto-Off Enabled** | Boolean | Toggle for auto-off feature |
-| **Auto-Off Time** | Integer | Timeout in seconds |
+| **Light Switches** | Boolean | Enable/disable light switch feature |
+| **Presence Detection** | Boolean | Enable/disable presence detection |
+| **Presence Follow-Up Time** | Integer | Seconds to wait after presence ends (default: 60) |
+| **Brightness Control** | Boolean | Enable/disable brightness control |
+| **Brightness Threshold** | Integer | Lux threshold for presence activation (default: 100) |
+| **Auto-Off** | Boolean | Enable/disable auto-off feature |
+| **Auto-Off Time** | Integer | Timeout in seconds (default: 300) |
 | **Remaining Time** | Integer | Countdown display |
 | **Extend Timer** | Integer (Button) | Reset/extend the timer |
-| **Notifications Enabled** | Boolean | Toggle for push notifications |
-| **Notification Threshold** | Integer | Seconds before auto-off to send notification |
+| **Notifications** | Boolean | Enable/disable push notifications |
+| **Notify Before** | Integer | Seconds before auto-off to send notification (default: 60) |
+
+All feature toggles are disabled by default. Users can enable/disable features and adjust settings directly via the visualization without needing access to the instance configuration.
 
 ### Push Notifications
 
-When configured with Tile Visualizations and push notifications enabled:
+When configured with Tile Visualizations and notifications enabled:
 
 1. Lights turn on (manually, via switch, or by presence)
 2. Auto-off timer starts counting down
-3. When remaining time reaches the notification threshold, a push notification is sent
+3. When remaining time reaches the "Notify Before" threshold, a push notification is sent
 4. Notification shows: **"Light Name (Location)"** - "Turns off in X seconds. Tap to extend."
 5. User can tap the notification to extend the timer
 6. If not extended, lights automatically switch off when timer reaches zero
+
+**Note**: Auto-off takes priority over presence detection. When auto-off triggers, presence must go false before it can turn lights on again.
 
 ---
 
@@ -370,6 +327,15 @@ ALC_CountdownTick(int $InstanceID);
 ---
 
 ## Changelog
+
+### Version 2.0.0 (2026-01-17)
+- **Breaking Change**: Removed Enable* checkboxes from instance configuration
+- All variables are now always created (no conditional creation)
+- Features are now enabled/disabled via variables in the visualization
+- Removed Visualization Visibility settings (all variables always visible)
+- Removed User Configuration Permissions (all settings user-adjustable)
+- Cleaner variable names (removed "Enabled" suffix from toggle variables)
+- Renamed "Notification Threshold" to "Notify Before" for clarity
 
 ### Version 1.0.0 (2026-01-11)
 - Initial release

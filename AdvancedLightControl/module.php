@@ -14,10 +14,6 @@ class AdvancedLightControl extends IPSModule
         $this->RegisterPropertyString('Lamps', '[]');
 
         // ---- Properties: Auto-Off Feature ----
-        $this->RegisterPropertyBoolean('EnableAutoOff', false);
-        $this->RegisterPropertyInteger('AutoOffTime', 300);
-        $this->RegisterPropertyInteger('NotificationThreshold', 60);
-        $this->RegisterPropertyBoolean('EnableNotifications', false);
         $this->RegisterPropertyString('LightName', '');
         $this->RegisterPropertyString('LightLocation', '');
 
@@ -26,43 +22,13 @@ class AdvancedLightControl extends IPSModule
 
         // ---- Properties: Presence Detectors ----
         $this->RegisterPropertyString('PresenceDetectors', '[]');
-        $this->RegisterPropertyBoolean('EnablePresenceDetection', false);
-        $this->RegisterPropertyInteger('PresenceFollowUpTime', 60);
 
         // ---- Properties: Brightness Sensor ----
         $this->RegisterPropertyInteger('BrightnessSensor', 0);
-        $this->RegisterPropertyBoolean('EnableBrightnessControl', false);
-        $this->RegisterPropertyInteger('BrightnessThreshold', 100);
 
         // ---- Properties: Light Switches ----
         $this->RegisterPropertyString('LightSwitches', '[]');
-        $this->RegisterPropertyBoolean('EnableLightSwitches', false);
         $this->RegisterPropertyInteger('SwitchMode', 0); // 0=Push-button, 1=Toggle on change, 2=On-only
-
-        // ---- Properties: Visibility in Visualization ----
-        $this->RegisterPropertyBoolean('ShowMasterSwitch', true);
-        $this->RegisterPropertyBoolean('ShowAutoOffToggle', true);
-        $this->RegisterPropertyBoolean('ShowAutoOffTime', true);
-        $this->RegisterPropertyBoolean('ShowRemainingTime', true);
-        $this->RegisterPropertyBoolean('ShowExtendButton', true);
-        $this->RegisterPropertyBoolean('ShowNotificationToggle', true);
-        $this->RegisterPropertyBoolean('ShowNotificationThreshold', true);
-        $this->RegisterPropertyBoolean('ShowPresenceToggle', true);
-        $this->RegisterPropertyBoolean('ShowPresenceFollowUpTime', true);
-        $this->RegisterPropertyBoolean('ShowBrightnessToggle', true);
-        $this->RegisterPropertyBoolean('ShowBrightnessThreshold', true);
-        $this->RegisterPropertyBoolean('ShowSwitchesToggle', true);
-
-        // ---- Properties: Allow User Configuration in Visualization ----
-        $this->RegisterPropertyBoolean('AllowUserAutoOffToggle', true);
-        $this->RegisterPropertyBoolean('AllowUserAutoOffTime', true);
-        $this->RegisterPropertyBoolean('AllowUserExtend', true);
-        $this->RegisterPropertyBoolean('AllowUserNotificationToggle', true);
-        $this->RegisterPropertyBoolean('AllowUserNotificationThreshold', true);
-        $this->RegisterPropertyBoolean('AllowUserPresenceToggle', true);
-        $this->RegisterPropertyBoolean('AllowUserBrightnessToggle', true);
-        $this->RegisterPropertyBoolean('AllowUserBrightnessThreshold', true);
-        $this->RegisterPropertyBoolean('AllowUserSwitchesToggle', true);
 
         // ---- Profiles ----
         $this->ensureProfiles();
@@ -96,132 +62,84 @@ class AdvancedLightControl extends IPSModule
         $this->EnableAction('MasterSwitch');
 
         // Light switches variables (position 2)
-        $enableSwitches = $this->ReadPropertyBoolean('EnableLightSwitches');
-        $this->MaintainVariable('SwitchesEnabled', $this->Translate('Light Switches Enabled'), VARIABLETYPE_BOOLEAN, [
+        $this->MaintainVariable('SwitchesEnabled', $this->Translate('Light Switches'), VARIABLETYPE_BOOLEAN, [
             'PRESENTATION' => VARIABLE_PRESENTATION_SWITCH,
             'ICON_ON' => 'Power',
             'ICON_OFF' => 'Power'
-        ], 2, $enableSwitches);
+        ], 2, true);
+        $this->EnableAction('SwitchesEnabled');
+        $this->initializeVariableDefault('SwitchesEnabled', false);
 
         // Presence detection variables (positions 3-4)
-        $enablePresence = $this->ReadPropertyBoolean('EnablePresenceDetection');
-        $this->MaintainVariable('PresenceEnabled', $this->Translate('Presence Detection Enabled'), VARIABLETYPE_BOOLEAN, [
+        $this->MaintainVariable('PresenceEnabled', $this->Translate('Presence Detection'), VARIABLETYPE_BOOLEAN, [
             'PRESENTATION' => VARIABLE_PRESENTATION_SWITCH,
             'ICON_ON' => 'Motion',
             'ICON_OFF' => 'Motion'
-        ], 3, $enablePresence);
+        ], 3, true);
         $this->MaintainVariable('PresenceFollowUpTime', $this->Translate('Presence Follow-Up Time'), VARIABLETYPE_INTEGER, [
             'PRESENTATION' => VARIABLE_PRESENTATION_VALUE_INPUT,
             'SUFFIX' => ' s'
-        ], 4, $enablePresence);
+        ], 4, true);
+        $this->EnableAction('PresenceEnabled');
+        $this->EnableAction('PresenceFollowUpTime');
+        $this->initializeVariableDefault('PresenceEnabled', false);
+        $this->initializeVariableDefault('PresenceFollowUpTime', 60);
 
         // Brightness control variables (positions 5-6)
-        $enableBrightness = $this->ReadPropertyBoolean('EnableBrightnessControl');
-        $this->MaintainVariable('BrightnessEnabled', $this->Translate('Brightness Control Enabled'), VARIABLETYPE_BOOLEAN, [
+        $this->MaintainVariable('BrightnessEnabled', $this->Translate('Brightness Control'), VARIABLETYPE_BOOLEAN, [
             'PRESENTATION' => VARIABLE_PRESENTATION_SWITCH,
             'ICON_ON' => 'Sun',
             'ICON_OFF' => 'Sun'
-        ], 5, $enableBrightness);
+        ], 5, true);
         $this->MaintainVariable('BrightnessThreshold', $this->Translate('Brightness Threshold'), VARIABLETYPE_INTEGER, [
             'PRESENTATION' => VARIABLE_PRESENTATION_VALUE_INPUT,
             'SUFFIX' => ' lux'
-        ], 6, $enableBrightness);
+        ], 6, true);
+        $this->EnableAction('BrightnessEnabled');
+        $this->EnableAction('BrightnessThreshold');
+        $this->initializeVariableDefault('BrightnessEnabled', false);
+        $this->initializeVariableDefault('BrightnessThreshold', 100);
 
         // Auto-off variables (positions 7-12)
-        $enableAutoOff = $this->ReadPropertyBoolean('EnableAutoOff');
-        $this->MaintainVariable('AutoOffEnabled', $this->Translate('Auto-Off Enabled'), VARIABLETYPE_BOOLEAN, [
+        $this->MaintainVariable('AutoOffEnabled', $this->Translate('Auto-Off'), VARIABLETYPE_BOOLEAN, [
             'PRESENTATION' => VARIABLE_PRESENTATION_SWITCH,
             'ICON_ON' => 'Clock',
             'ICON_OFF' => 'Clock'
-        ], 7, $enableAutoOff);
+        ], 7, true);
         $this->MaintainVariable('AutoOffTime', $this->Translate('Auto-Off Time'), VARIABLETYPE_INTEGER, [
             'PRESENTATION' => VARIABLE_PRESENTATION_VALUE_INPUT,
             'SUFFIX' => ' s'
-        ], 8, $enableAutoOff);
+        ], 8, true);
         $this->MaintainVariable('RemainingTime', $this->Translate('Remaining Time'), VARIABLETYPE_INTEGER, [
             'PRESENTATION' => VARIABLE_PRESENTATION_DURATION,
             'DISPLAY_TYPE' => 'Value',
             'DISPLAY_UNIT' => 'Seconds',
             'FORMAT' => 2
-        ], 9, $enableAutoOff);
+        ], 9, true);
         $this->MaintainVariable('ExtendTimer', $this->Translate('Extend Timer'), VARIABLETYPE_INTEGER, [
             'PRESENTATION' => VARIABLE_PRESENTATION_ENUMERATION,
             'OPTIONS' => json_encode([
                 ['Value' => 0, 'Caption' => $this->Translate('Extend Timer'), 'IconActive' => true, 'IconValue' => 'Clock', 'Color' => 0x00FF00]
             ])
-        ], 10, $enableAutoOff);
-        $this->MaintainVariable('NotificationsEnabled', $this->Translate('Notifications Enabled'), VARIABLETYPE_BOOLEAN, [
+        ], 10, true);
+        $this->MaintainVariable('NotificationsEnabled', $this->Translate('Notifications'), VARIABLETYPE_BOOLEAN, [
             'PRESENTATION' => VARIABLE_PRESENTATION_SWITCH,
             'ICON_ON' => 'Speaker',
             'ICON_OFF' => 'Speaker'
-        ], 11, $enableAutoOff);
-        $this->MaintainVariable('NotificationThreshold', $this->Translate('Notification Threshold'), VARIABLETYPE_INTEGER, [
+        ], 11, true);
+        $this->MaintainVariable('NotificationThreshold', $this->Translate('Notify Before'), VARIABLETYPE_INTEGER, [
             'PRESENTATION' => VARIABLE_PRESENTATION_VALUE_INPUT,
             'SUFFIX' => ' s'
-        ], 12, $enableAutoOff);
-
-        if ($enableSwitches) {
-            $this->EnableAction('SwitchesEnabled');
-            $switchesEnabledID = @$this->GetIDForIdent('SwitchesEnabled');
-            if ($switchesEnabledID) {
-                SetValue($switchesEnabledID, true);
-            }
-        }
-
-        if ($enablePresence) {
-            $this->EnableAction('PresenceEnabled');
-            $this->EnableAction('PresenceFollowUpTime');
-            $presenceEnabledID = @$this->GetIDForIdent('PresenceEnabled');
-            if ($presenceEnabledID) {
-                SetValue($presenceEnabledID, true);
-            }
-            $followUpTimeID = @$this->GetIDForIdent('PresenceFollowUpTime');
-            if ($followUpTimeID) {
-                SetValue($followUpTimeID, $this->ReadPropertyInteger('PresenceFollowUpTime'));
-            }
-        }
-
-        if ($enableBrightness) {
-            $this->EnableAction('BrightnessEnabled');
-            $this->EnableAction('BrightnessThreshold');
-            $brightnessEnabledID = @$this->GetIDForIdent('BrightnessEnabled');
-            if ($brightnessEnabledID) {
-                SetValue($brightnessEnabledID, true);
-            }
-            $brightnessThresholdID = @$this->GetIDForIdent('BrightnessThreshold');
-            if ($brightnessThresholdID) {
-                SetValue($brightnessThresholdID, $this->ReadPropertyInteger('BrightnessThreshold'));
-            }
-        }
-
-        if ($enableAutoOff) {
-            $this->EnableAction('AutoOffEnabled');
-            $this->EnableAction('AutoOffTime');
-            $this->EnableAction('ExtendTimer');
-            $this->EnableAction('NotificationsEnabled');
-            $this->EnableAction('NotificationThreshold');
-
-            // Always apply config values to variables (config is source of truth)
-            $autoOffEnabledID = @$this->GetIDForIdent('AutoOffEnabled');
-            if ($autoOffEnabledID) {
-                SetValue($autoOffEnabledID, true);
-            }
-            $autoOffTimeID = @$this->GetIDForIdent('AutoOffTime');
-            if ($autoOffTimeID) {
-                SetValue($autoOffTimeID, $this->ReadPropertyInteger('AutoOffTime'));
-            }
-            $notificationsEnabledID = @$this->GetIDForIdent('NotificationsEnabled');
-            if ($notificationsEnabledID) {
-                SetValue($notificationsEnabledID, $this->ReadPropertyBoolean('EnableNotifications'));
-            }
-            $notificationThresholdID = @$this->GetIDForIdent('NotificationThreshold');
-            if ($notificationThresholdID) {
-                SetValue($notificationThresholdID, $this->ReadPropertyInteger('NotificationThreshold'));
-            }
-        }
-
-        // Set visibility based on configuration
-        $this->updateVariableVisibility();
+        ], 12, true);
+        $this->EnableAction('AutoOffEnabled');
+        $this->EnableAction('AutoOffTime');
+        $this->EnableAction('ExtendTimer');
+        $this->EnableAction('NotificationsEnabled');
+        $this->EnableAction('NotificationThreshold');
+        $this->initializeVariableDefault('AutoOffEnabled', false);
+        $this->initializeVariableDefault('AutoOffTime', 300);
+        $this->initializeVariableDefault('NotificationsEnabled', false);
+        $this->initializeVariableDefault('NotificationThreshold', 60);
 
         // Register message subscriptions for lamps, presence detectors, and brightness sensor
         $this->registerMessages();
@@ -237,9 +155,7 @@ class AdvancedLightControl extends IPSModule
         $this->WriteAttributeBoolean('PresenceWasActiveOnManualSwitch', false);
         $this->WriteAttributeBoolean('PushButtonState', false);
 
-        if ($enableAutoOff) {
-            @SetValue($this->GetIDForIdent('RemainingTime'), 0);
-        }
+        @SetValue($this->GetIDForIdent('RemainingTime'), 0);
 
         // Update master switch state based on current lamp states
         $this->updateMasterSwitchState();
@@ -248,8 +164,6 @@ class AdvancedLightControl extends IPSModule
     /* ================= Configuration Form ================= */
     public function GetConfigurationForm(): string
     {
-        $enableAutoOff = $this->ReadPropertyBoolean('EnableAutoOff');
-
         return json_encode([
             'elements' => [
                 [
@@ -293,15 +207,9 @@ class AdvancedLightControl extends IPSModule
                     'caption' => 'Light Switches',
                     'items' => [
                         [
-                            'type' => 'CheckBox',
-                            'name' => 'EnableLightSwitches',
-                            'caption' => 'Enable Light Switches'
-                        ],
-                        [
                             'type' => 'Select',
                             'name' => 'SwitchMode',
                             'caption' => 'Switch Mode',
-                            'visible' => $this->ReadPropertyBoolean('EnableLightSwitches'),
                             'options' => [
                                 ['caption' => 'Push-button (toggle on press)', 'value' => 0],
                                 ['caption' => 'Toggle on any change', 'value' => 1],
@@ -315,7 +223,6 @@ class AdvancedLightControl extends IPSModule
                             'rowCount' => 5,
                             'add' => true,
                             'delete' => true,
-                            'visible' => $this->ReadPropertyBoolean('EnableLightSwitches'),
                             'columns' => [
                                 [
                                     'caption' => 'Switch Variable',
@@ -345,18 +252,12 @@ class AdvancedLightControl extends IPSModule
                     'caption' => 'Presence Detection',
                     'items' => [
                         [
-                            'type' => 'CheckBox',
-                            'name' => 'EnablePresenceDetection',
-                            'caption' => 'Enable Presence Detection'
-                        ],
-                        [
                             'type' => 'List',
                             'name' => 'PresenceDetectors',
                             'caption' => 'Presence Detectors',
                             'rowCount' => 5,
                             'add' => true,
                             'delete' => true,
-                            'visible' => $this->ReadPropertyBoolean('EnablePresenceDetection'),
                             'columns' => [
                                 [
                                     'caption' => 'Presence Detector Variable',
@@ -378,14 +279,6 @@ class AdvancedLightControl extends IPSModule
                                     ]
                                 ]
                             ]
-                        ],
-                        [
-                            'type' => 'NumberSpinner',
-                            'name' => 'PresenceFollowUpTime',
-                            'caption' => 'Follow-Up Time (s)',
-                            'minimum' => 1,
-                            'maximum' => 172800,
-                            'visible' => $this->ReadPropertyBoolean('EnablePresenceDetection')
                         ]
                     ]
                 ],
@@ -394,75 +287,32 @@ class AdvancedLightControl extends IPSModule
                     'caption' => 'Brightness Control',
                     'items' => [
                         [
-                            'type' => 'CheckBox',
-                            'name' => 'EnableBrightnessControl',
-                            'caption' => 'Enable Brightness Control'
-                        ],
-                        [
                             'type' => 'SelectVariable',
                             'name' => 'BrightnessSensor',
                             'caption' => 'Brightness Sensor Variable',
-                            'validVariableTypes' => [VARIABLETYPE_INTEGER, VARIABLETYPE_FLOAT],
-                            'visible' => $this->ReadPropertyBoolean('EnableBrightnessControl')
-                        ],
-                        [
-                            'type' => 'NumberSpinner',
-                            'name' => 'BrightnessThreshold',
-                            'caption' => 'Brightness Threshold (lux)',
-                            'minimum' => 0,
-                            'visible' => $this->ReadPropertyBoolean('EnableBrightnessControl')
+                            'validVariableTypes' => [VARIABLETYPE_INTEGER, VARIABLETYPE_FLOAT]
                         ]
                     ]
                 ],
                 [
                     'type' => 'ExpansionPanel',
-                    'caption' => 'Auto-Off Settings',
+                    'caption' => 'Notifications',
                     'items' => [
-                        [
-                            'type' => 'CheckBox',
-                            'name' => 'EnableAutoOff',
-                            'caption' => 'Enable Auto-Off Feature'
-                        ],
-                        [
-                            'type' => 'NumberSpinner',
-                            'name' => 'AutoOffTime',
-                            'caption' => 'Auto-Off Time (s)',
-                            'minimum' => 1,
-                            'maximum' => 172800,
-                            'visible' => $enableAutoOff
-                        ],
-                        [
-                            'type' => 'CheckBox',
-                            'name' => 'EnableNotifications',
-                            'caption' => 'Enable Push Notifications',
-                            'visible' => $enableAutoOff
-                        ],
-                        [
-                            'type' => 'NumberSpinner',
-                            'name' => 'NotificationThreshold',
-                            'caption' => 'Notification Threshold (s)',
-                            'minimum' => 1,
-                            'maximum' => 172800,
-                            'visible' => $enableAutoOff
-                        ],
                         [
                             'type' => 'ValidationTextBox',
                             'name' => 'LightName',
-                            'caption' => 'Light Name',
-                            'visible' => $enableAutoOff
+                            'caption' => 'Light Name'
                         ],
                         [
                             'type' => 'ValidationTextBox',
                             'name' => 'LightLocation',
-                            'caption' => 'Light Location',
-                            'visible' => $enableAutoOff
+                            'caption' => 'Light Location'
                         ]
                     ]
                 ],
                 [
                     'type' => 'ExpansionPanel',
                     'caption' => 'Tile Visualizations',
-                    'visible' => $enableAutoOff,
                     'items' => [
                         [
                             'type' => 'List',
@@ -484,171 +334,9 @@ class AdvancedLightControl extends IPSModule
                             ]
                         ]
                     ]
-                ],
-                [
-                    'type' => 'ExpansionPanel',
-                    'caption' => 'Visualization Visibility',
-                    'items' => [
-                        [
-                            'type' => 'Label',
-                            'caption' => 'Show/hide elements in visualization:'
-                        ],
-                        [
-                            'type' => 'CheckBox',
-                            'name' => 'ShowMasterSwitch',
-                            'caption' => 'Show Master Switch'
-                        ],
-                        [
-                            'type' => 'CheckBox',
-                            'name' => 'ShowSwitchesToggle',
-                            'caption' => 'Show Light Switches Toggle',
-                            'visible' => $this->ReadPropertyBoolean('EnableLightSwitches')
-                        ],
-                        [
-                            'type' => 'CheckBox',
-                            'name' => 'ShowPresenceToggle',
-                            'caption' => 'Show Presence Toggle',
-                            'visible' => $this->ReadPropertyBoolean('EnablePresenceDetection')
-                        ],
-                        [
-                            'type' => 'CheckBox',
-                            'name' => 'ShowPresenceFollowUpTime',
-                            'caption' => 'Show Presence Follow-Up Time',
-                            'visible' => $this->ReadPropertyBoolean('EnablePresenceDetection')
-                        ],
-                        [
-                            'type' => 'CheckBox',
-                            'name' => 'ShowBrightnessToggle',
-                            'caption' => 'Show Brightness Toggle',
-                            'visible' => $this->ReadPropertyBoolean('EnableBrightnessControl')
-                        ],
-                        [
-                            'type' => 'CheckBox',
-                            'name' => 'ShowBrightnessThreshold',
-                            'caption' => 'Show Brightness Threshold',
-                            'visible' => $this->ReadPropertyBoolean('EnableBrightnessControl')
-                        ],
-                        [
-                            'type' => 'CheckBox',
-                            'name' => 'ShowAutoOffToggle',
-                            'caption' => 'Show Auto-Off Toggle',
-                            'visible' => $enableAutoOff
-                        ],
-                        [
-                            'type' => 'CheckBox',
-                            'name' => 'ShowAutoOffTime',
-                            'caption' => 'Show Auto-Off Time Setting',
-                            'visible' => $enableAutoOff
-                        ],
-                        [
-                            'type' => 'CheckBox',
-                            'name' => 'ShowRemainingTime',
-                            'caption' => 'Show Remaining Time',
-                            'visible' => $enableAutoOff
-                        ],
-                        [
-                            'type' => 'CheckBox',
-                            'name' => 'ShowExtendButton',
-                            'caption' => 'Show Extend Timer Button',
-                            'visible' => $enableAutoOff
-                        ],
-                        [
-                            'type' => 'CheckBox',
-                            'name' => 'ShowNotificationToggle',
-                            'caption' => 'Show Notification Toggle',
-                            'visible' => $enableAutoOff
-                        ],
-                        [
-                            'type' => 'CheckBox',
-                            'name' => 'ShowNotificationThreshold',
-                            'caption' => 'Show Notification Threshold',
-                            'visible' => $enableAutoOff
-                        ]
-                    ]
-                ],
-                [
-                    'type' => 'ExpansionPanel',
-                    'caption' => 'User Configuration Permissions',
-                    'items' => [
-                        [
-                            'type' => 'Label',
-                            'caption' => 'User permissions in visualization:'
-                        ],
-                        [
-                            'type' => 'CheckBox',
-                            'name' => 'AllowUserSwitchesToggle',
-                            'caption' => 'Allow Light Switches Toggle',
-                            'visible' => $this->ReadPropertyBoolean('EnableLightSwitches')
-                        ],
-                        [
-                            'type' => 'CheckBox',
-                            'name' => 'AllowUserPresenceToggle',
-                            'caption' => 'Allow Presence Toggle',
-                            'visible' => $this->ReadPropertyBoolean('EnablePresenceDetection')
-                        ],
-                        [
-                            'type' => 'CheckBox',
-                            'name' => 'AllowUserBrightnessToggle',
-                            'caption' => 'Allow Brightness Toggle',
-                            'visible' => $this->ReadPropertyBoolean('EnableBrightnessControl')
-                        ],
-                        [
-                            'type' => 'CheckBox',
-                            'name' => 'AllowUserBrightnessThreshold',
-                            'caption' => 'Allow Brightness Threshold',
-                            'visible' => $this->ReadPropertyBoolean('EnableBrightnessControl')
-                        ],
-                        [
-                            'type' => 'CheckBox',
-                            'name' => 'AllowUserAutoOffToggle',
-                            'caption' => 'Allow Auto-Off Toggle',
-                            'visible' => $enableAutoOff
-                        ],
-                        [
-                            'type' => 'CheckBox',
-                            'name' => 'AllowUserAutoOffTime',
-                            'caption' => 'Allow Auto-Off Time',
-                            'visible' => $enableAutoOff
-                        ],
-                        [
-                            'type' => 'CheckBox',
-                            'name' => 'AllowUserExtend',
-                            'caption' => 'Allow Extending Timer',
-                            'visible' => $enableAutoOff
-                        ],
-                        [
-                            'type' => 'CheckBox',
-                            'name' => 'AllowUserNotificationToggle',
-                            'caption' => 'Allow Notifications Toggle',
-                            'visible' => $enableAutoOff
-                        ],
-                        [
-                            'type' => 'CheckBox',
-                            'name' => 'AllowUserNotificationThreshold',
-                            'caption' => 'Allow Notification Threshold',
-                            'visible' => $enableAutoOff
-                        ]
-                    ]
                 ]
             ],
-            'actions' => [
-                [
-                    'type' => 'Button',
-                    'caption' => 'Switch All Lamps ON',
-                    'onClick' => 'ALC_SwitchAll($id, true);'
-                ],
-                [
-                    'type' => 'Button',
-                    'caption' => 'Switch All Lamps OFF',
-                    'onClick' => 'ALC_SwitchAll($id, false);'
-                ],
-                [
-                    'type' => 'Button',
-                    'caption' => 'Reset Timer',
-                    'onClick' => 'ALC_ExtendTimer($id);',
-                    'visible' => $enableAutoOff
-                ]
-            ],
+            'actions' => [],
             'status' => [
                 [
                     'code' => 102,
@@ -673,76 +361,51 @@ class AdvancedLightControl extends IPSModule
                 break;
 
             case 'AutoOffEnabled':
-                if ($this->ReadPropertyBoolean('AllowUserAutoOffToggle')) {
-                    SetValue($this->GetIDForIdent('AutoOffEnabled'), (bool)$Value);
-                    if (!(bool)$Value) {
-                        $this->stopTimer();
-                    }
+                SetValue($this->GetIDForIdent('AutoOffEnabled'), (bool)$Value);
+                if (!(bool)$Value) {
+                    $this->stopTimer();
                 }
                 break;
 
             case 'AutoOffTime':
-                if ($this->ReadPropertyBoolean('AllowUserAutoOffTime')) {
-                    $val = max(1, min(172800, (int)$Value));
-                    SetValue($this->GetIDForIdent('AutoOffTime'), $val);
-                    $this->syncPropertyToConfig('AutoOffTime', $val);
-                }
+                $val = max(1, min(172800, (int)$Value));
+                SetValue($this->GetIDForIdent('AutoOffTime'), $val);
                 break;
 
             case 'ExtendTimer':
-                if ($this->ReadPropertyBoolean('AllowUserExtend')) {
-                    $this->ExtendTimer();
-                }
+                $this->ExtendTimer();
                 SetValue($this->GetIDForIdent('ExtendTimer'), 0);
                 break;
 
             case 'NotificationsEnabled':
-                if ($this->ReadPropertyBoolean('AllowUserNotificationToggle')) {
-                    SetValue($this->GetIDForIdent('NotificationsEnabled'), (bool)$Value);
-                    $this->syncPropertyToConfig('EnableNotifications', (bool)$Value);
-                }
+                SetValue($this->GetIDForIdent('NotificationsEnabled'), (bool)$Value);
                 break;
 
             case 'NotificationThreshold':
-                if ($this->ReadPropertyBoolean('AllowUserNotificationThreshold')) {
-                    $val = max(1, min(172800, (int)$Value));
-                    SetValue($this->GetIDForIdent('NotificationThreshold'), $val);
-                    $this->syncPropertyToConfig('NotificationThreshold', $val);
-                }
+                $val = max(1, min(172800, (int)$Value));
+                SetValue($this->GetIDForIdent('NotificationThreshold'), $val);
                 break;
 
             case 'PresenceEnabled':
-                if ($this->ReadPropertyBoolean('AllowUserPresenceToggle')) {
-                    SetValue($this->GetIDForIdent('PresenceEnabled'), (bool)$Value);
-                }
+                SetValue($this->GetIDForIdent('PresenceEnabled'), (bool)$Value);
                 break;
 
             case 'PresenceFollowUpTime':
-                if ($this->ReadPropertyBoolean('AllowUserPresenceToggle')) {
-                    $val = max(1, min(172800, (int)$Value));
-                    SetValue($this->GetIDForIdent('PresenceFollowUpTime'), $val);
-                    $this->syncPropertyToConfig('PresenceFollowUpTime', $val);
-                }
+                $val = max(1, min(172800, (int)$Value));
+                SetValue($this->GetIDForIdent('PresenceFollowUpTime'), $val);
                 break;
 
             case 'BrightnessEnabled':
-                if ($this->ReadPropertyBoolean('AllowUserBrightnessToggle')) {
-                    SetValue($this->GetIDForIdent('BrightnessEnabled'), (bool)$Value);
-                }
+                SetValue($this->GetIDForIdent('BrightnessEnabled'), (bool)$Value);
                 break;
 
             case 'BrightnessThreshold':
-                if ($this->ReadPropertyBoolean('AllowUserBrightnessThreshold')) {
-                    $val = max(0, (int)$Value);
-                    SetValue($this->GetIDForIdent('BrightnessThreshold'), $val);
-                    $this->syncPropertyToConfig('BrightnessThreshold', $val);
-                }
+                $val = max(0, (int)$Value);
+                SetValue($this->GetIDForIdent('BrightnessThreshold'), $val);
                 break;
 
             case 'SwitchesEnabled':
-                if ($this->ReadPropertyBoolean('AllowUserSwitchesToggle')) {
-                    SetValue($this->GetIDForIdent('SwitchesEnabled'), (bool)$Value);
-                }
+                SetValue($this->GetIDForIdent('SwitchesEnabled'), (bool)$Value);
                 break;
 
             default:
@@ -772,34 +435,28 @@ class AdvancedLightControl extends IPSModule
             return;
         }
 
-        // Check if sender is a presence detector (only if feature enabled)
-        if ($this->ReadPropertyBoolean('EnablePresenceDetection')) {
-            $detectors = $this->getPresenceDetectors();
-            foreach ($detectors as $detector) {
-                if ((int)$detector['DetectorID'] === $SenderID) {
-                    $this->handlePresenceChange();
-                    return;
-                }
-            }
-        }
-
-        // Check if sender is the brightness sensor (only if feature enabled)
-        if ($this->ReadPropertyBoolean('EnableBrightnessControl')) {
-            $brightnessSensorID = $this->ReadPropertyInteger('BrightnessSensor');
-            if ($SenderID === $brightnessSensorID) {
-                $this->handleBrightnessChange();
+        // Check if sender is a presence detector
+        $detectors = $this->getPresenceDetectors();
+        foreach ($detectors as $detector) {
+            if ((int)$detector['DetectorID'] === $SenderID) {
+                $this->handlePresenceChange();
                 return;
             }
         }
 
-        // Check if sender is a light switch (only if feature enabled)
-        if ($this->ReadPropertyBoolean('EnableLightSwitches')) {
-            $switches = $this->getLightSwitches();
-            foreach ($switches as $switch) {
-                if ((int)$switch['SwitchID'] === $SenderID) {
-                    $this->handleSwitchChange($SenderID, $Data);
-                    return;
-                }
+        // Check if sender is the brightness sensor
+        $brightnessSensorID = $this->ReadPropertyInteger('BrightnessSensor');
+        if ($SenderID === $brightnessSensorID) {
+            $this->handleBrightnessChange();
+            return;
+        }
+
+        // Check if sender is a light switch
+        $switches = $this->getLightSwitches();
+        foreach ($switches as $switch) {
+            if ((int)$switch['SwitchID'] === $SenderID) {
+                $this->handleSwitchChange($SenderID, $Data);
+                return;
             }
         }
     }
@@ -865,10 +522,6 @@ class AdvancedLightControl extends IPSModule
      */
     public function ExtendTimer(): void
     {
-        if (!$this->ReadPropertyBoolean('EnableAutoOff')) {
-            return;
-        }
-
         $masterSwitch = @GetValue($this->GetIDForIdent('MasterSwitch'));
         if ($masterSwitch && $this->isAutoOffActive()) {
             $this->armAutoOffTimer();
@@ -881,10 +534,6 @@ class AdvancedLightControl extends IPSModule
      */
     public function GetRemainingTime(): int
     {
-        if (!$this->ReadPropertyBoolean('EnableAutoOff')) {
-            return 0;
-        }
-
         $until = $this->ReadAttributeInteger('AutoOffUntil');
         return max(0, $until - time());
     }
@@ -949,10 +598,6 @@ class AdvancedLightControl extends IPSModule
      */
     public function SetAutoOffTime(int $Seconds): void
     {
-        if (!$this->ReadPropertyBoolean('EnableAutoOff')) {
-            return;
-        }
-
         $seconds = max(1, min(86400, $Seconds));
         SetValue($this->GetIDForIdent('AutoOffTime'), $seconds);
     }
@@ -962,10 +607,6 @@ class AdvancedLightControl extends IPSModule
      */
     public function SetAutoOffEnabled(bool $Enabled): void
     {
-        if (!$this->ReadPropertyBoolean('EnableAutoOff')) {
-            return;
-        }
-
         SetValue($this->GetIDForIdent('AutoOffEnabled'), $Enabled);
         if (!$Enabled) {
             $this->stopTimer();
@@ -1017,32 +658,26 @@ class AdvancedLightControl extends IPSModule
         }
 
         // Register presence detector variables
-        if ($this->ReadPropertyBoolean('EnablePresenceDetection')) {
-            $detectors = $this->getPresenceDetectors();
-            foreach ($detectors as $detector) {
-                $detectorID = (int)$detector['DetectorID'];
-                if ($detectorID > 0) {
-                    $this->RegisterMessage($detectorID, self::VM_UPDATE);
-                }
+        $detectors = $this->getPresenceDetectors();
+        foreach ($detectors as $detector) {
+            $detectorID = (int)$detector['DetectorID'];
+            if ($detectorID > 0) {
+                $this->RegisterMessage($detectorID, self::VM_UPDATE);
             }
         }
 
         // Register brightness sensor variable
-        if ($this->ReadPropertyBoolean('EnableBrightnessControl')) {
-            $brightnessSensorID = $this->ReadPropertyInteger('BrightnessSensor');
-            if ($brightnessSensorID > 0 && @IPS_VariableExists($brightnessSensorID)) {
-                $this->RegisterMessage($brightnessSensorID, self::VM_UPDATE);
-            }
+        $brightnessSensorID = $this->ReadPropertyInteger('BrightnessSensor');
+        if ($brightnessSensorID > 0 && @IPS_VariableExists($brightnessSensorID)) {
+            $this->RegisterMessage($brightnessSensorID, self::VM_UPDATE);
         }
 
         // Register light switch variables
-        if ($this->ReadPropertyBoolean('EnableLightSwitches')) {
-            $switches = $this->getLightSwitches();
-            foreach ($switches as $switch) {
-                $switchID = (int)$switch['SwitchID'];
-                if ($switchID > 0) {
-                    $this->RegisterMessage($switchID, self::VM_UPDATE);
-                }
+        $switches = $this->getLightSwitches();
+        foreach ($switches as $switch) {
+            $switchID = (int)$switch['SwitchID'];
+            if ($switchID > 0) {
+                $this->RegisterMessage($switchID, self::VM_UPDATE);
             }
         }
     }
@@ -1073,10 +708,6 @@ class AdvancedLightControl extends IPSModule
 
     private function isAnyPresenceDetected(): bool
     {
-        if (!$this->ReadPropertyBoolean('EnablePresenceDetection')) {
-            return false;
-        }
-
         $detectors = $this->getPresenceDetectors();
         foreach ($detectors as $detector) {
             $detectorID = (int)$detector['DetectorID'];
@@ -1091,29 +722,22 @@ class AdvancedLightControl extends IPSModule
 
     private function isPresenceDetectionEnabled(): bool
     {
-        if (!$this->ReadPropertyBoolean('EnablePresenceDetection')) {
-            return false;
-        }
-
         $presenceEnabledID = @$this->GetIDForIdent('PresenceEnabled');
         if ($presenceEnabledID && @IPS_VariableExists($presenceEnabledID)) {
             return (bool)@GetValue($presenceEnabledID);
         }
-        return true;
+        return false;
     }
 
     private function isBrightnessBelowThreshold(): bool
     {
-        if (!$this->ReadPropertyBoolean('EnableBrightnessControl')) {
-            return true; // If brightness control is disabled in config, always allow
-        }
-
-        // Check if brightness control is enabled via visualization variable
+        // Check if brightness control is enabled via variable
         $brightnessEnabledID = @$this->GetIDForIdent('BrightnessEnabled');
-        if ($brightnessEnabledID && @IPS_VariableExists($brightnessEnabledID)) {
-            if (!(bool)@GetValue($brightnessEnabledID)) {
-                return true; // Brightness control disabled by user, always allow
-            }
+        if (!$brightnessEnabledID || !@IPS_VariableExists($brightnessEnabledID)) {
+            return true; // Variable doesn't exist, allow lights
+        }
+        if (!(bool)@GetValue($brightnessEnabledID)) {
+            return true; // Brightness control disabled by user, always allow
         }
 
         $brightnessSensorID = $this->ReadPropertyInteger('BrightnessSensor');
@@ -1136,7 +760,7 @@ class AdvancedLightControl extends IPSModule
                 return (float)$val;
             }
         }
-        return (float)max(0, $this->ReadPropertyInteger('BrightnessThreshold'));
+        return 100.0; // Default: 100 lux
     }
 
     private function getPresenceFollowUpTime(): int
@@ -1148,7 +772,7 @@ class AdvancedLightControl extends IPSModule
                 return $val;
             }
         }
-        return max(1, $this->ReadPropertyInteger('PresenceFollowUpTime'));
+        return 60; // Default: 60 seconds
     }
 
     private function handlePresenceChange(): void
@@ -1221,17 +845,13 @@ class AdvancedLightControl extends IPSModule
 
     private function handleSwitchChange(int $senderID, array $data): void
     {
-        // Check if switches are enabled in config
-        if (!$this->ReadPropertyBoolean('EnableLightSwitches')) {
-            return;
-        }
-
-        // Check if switches are enabled via visualization variable
+        // Check if switches are enabled via variable
         $switchesEnabledID = @$this->GetIDForIdent('SwitchesEnabled');
-        if ($switchesEnabledID && @IPS_VariableExists($switchesEnabledID)) {
-            if (!(bool)@GetValue($switchesEnabledID)) {
-                return; // Switches disabled by user
-            }
+        if (!$switchesEnabledID || !@IPS_VariableExists($switchesEnabledID)) {
+            return; // Variable doesn't exist, switches disabled
+        }
+        if (!(bool)@GetValue($switchesEnabledID)) {
+            return; // Switches disabled by user
         }
 
         // Get switch mode: 0=Push-button, 1=Toggle on change, 2=On-only
@@ -1304,10 +924,6 @@ class AdvancedLightControl extends IPSModule
 
     private function isAutoOffActive(): bool
     {
-        if (!$this->ReadPropertyBoolean('EnableAutoOff')) {
-            return false;
-        }
-
         $autoOffEnabledID = @$this->GetIDForIdent('AutoOffEnabled');
         if (!$autoOffEnabledID) {
             return false;
@@ -1325,20 +941,16 @@ class AdvancedLightControl extends IPSModule
                 return $val;
             }
         }
-        return max(1, $this->ReadPropertyInteger('AutoOffTime'));
+        return 300; // Default: 5 minutes
     }
 
     private function areNotificationsEnabled(): bool
     {
-        if (!$this->ReadPropertyBoolean('EnableAutoOff')) {
-            return false;
-        }
-
         $notificationsEnabledID = @$this->GetIDForIdent('NotificationsEnabled');
         if ($notificationsEnabledID && @IPS_VariableExists($notificationsEnabledID)) {
             return (bool)@GetValue($notificationsEnabledID);
         }
-        return $this->ReadPropertyBoolean('EnableNotifications');
+        return false;
     }
 
     private function getNotificationThreshold(): int
@@ -1350,7 +962,7 @@ class AdvancedLightControl extends IPSModule
                 return $val;
             }
         }
-        return max(1, $this->ReadPropertyInteger('NotificationThreshold'));
+        return 60; // Default: 60 seconds
     }
 
     private function armAutoOffTimer(): void
@@ -1381,41 +993,25 @@ class AdvancedLightControl extends IPSModule
     }
 
     /**
-     * Sync a user-changed value back to the instance configuration
-     * Preserves timer state across the ApplyChanges call
+     * Initialize a variable with a default value only if it hasn't been set yet
      */
-    private function syncPropertyToConfig(string $propertyName, $value): void
+    private function initializeVariableDefault(string $ident, $defaultValue): void
     {
-        // Check if value is different from current property
-        if (is_bool($value)) {
-            $currentValue = $this->ReadPropertyBoolean($propertyName);
-        } elseif (is_int($value)) {
-            $currentValue = $this->ReadPropertyInteger($propertyName);
-        } else {
-            $currentValue = $this->ReadPropertyString($propertyName);
+        $varID = @$this->GetIDForIdent($ident);
+        if (!$varID || !@IPS_VariableExists($varID)) {
+            return;
         }
 
-        if ($currentValue === $value) {
-            return; // No change needed
-        }
-
-        // Save timer state before ApplyChanges
-        $autoOffUntil = $this->ReadAttributeInteger('AutoOffUntil');
-        $notificationSent = $this->ReadAttributeBoolean('NotificationSent');
-        $countdownRunning = $autoOffUntil > time();
-
-        // Apply property change
-        IPS_SetProperty($this->InstanceID, $propertyName, $value);
-        IPS_ApplyChanges($this->InstanceID);
-
-        // Restore timer state if it was running
-        if ($countdownRunning && $autoOffUntil > time()) {
-            $this->WriteAttributeInteger('AutoOffUntil', $autoOffUntil);
-            $this->WriteAttributeBoolean('NotificationSent', $notificationSent);
-            $remaining = $autoOffUntil - time();
-            $this->SetTimerInterval('AutoOff', $remaining * 1000);
-            $this->SetTimerInterval('CountdownTick', 1000);
-            @SetValue($this->GetIDForIdent('RemainingTime'), $remaining);
+        $variable = IPS_GetVariable($varID);
+        
+        // Check if this is a freshly created variable by looking at LastChange
+        // If LastChange equals creation time (within 1 second), initialize with default
+        $lastChange = $variable['VariableChanged'];
+        $created = $variable['VariableUpdated'];
+        
+        // If the variable has never been explicitly set (LastChange == 0 or equals creation)
+        if ($lastChange == 0 || abs($lastChange - $created) < 2) {
+            SetValue($varID, $defaultValue);
         }
     }
 
@@ -1451,152 +1047,6 @@ class AdvancedLightControl extends IPSModule
             $visuID = (int)$visu['VisuID'];
             if ($visuID > 0 && @IPS_InstanceExists($visuID)) {
                 @VISU_PostNotificationEx($visuID, $title, $message, 'Clock', 'alarm', $targetID);
-            }
-        }
-    }
-
-    private function updateVariableVisibility(): void
-    {
-        $enableAutoOff = $this->ReadPropertyBoolean('EnableAutoOff');
-        $enablePresence = $this->ReadPropertyBoolean('EnablePresenceDetection');
-        $enableBrightness = $this->ReadPropertyBoolean('EnableBrightnessControl');
-
-        // Master switch visibility
-        $masterSwitchID = @$this->GetIDForIdent('MasterSwitch');
-        if ($masterSwitchID) {
-            IPS_SetHidden($masterSwitchID, !$this->ReadPropertyBoolean('ShowMasterSwitch'));
-        }
-
-        // Presence detection toggle visibility (independent of auto-off)
-        if ($enablePresence) {
-            $presenceEnabledID = @$this->GetIDForIdent('PresenceEnabled');
-            if ($presenceEnabledID) {
-                $show = $this->ReadPropertyBoolean('ShowPresenceToggle');
-                IPS_SetHidden($presenceEnabledID, !$show);
-
-                if ($show && !$this->ReadPropertyBoolean('AllowUserPresenceToggle')) {
-                    $this->DisableAction('PresenceEnabled');
-                }
-            }
-
-            // Presence follow-up time visibility
-            $followUpTimeID = @$this->GetIDForIdent('PresenceFollowUpTime');
-            if ($followUpTimeID) {
-                $show = $this->ReadPropertyBoolean('ShowPresenceFollowUpTime');
-                IPS_SetHidden($followUpTimeID, !$show);
-
-                if ($show && !$this->ReadPropertyBoolean('AllowUserPresenceToggle')) {
-                    $this->DisableAction('PresenceFollowUpTime');
-                }
-            }
-        }
-
-        // Brightness control visibility (independent of auto-off)
-        if ($enableBrightness) {
-            // Brightness toggle visibility
-            $brightnessEnabledID = @$this->GetIDForIdent('BrightnessEnabled');
-            if ($brightnessEnabledID) {
-                $show = $this->ReadPropertyBoolean('ShowBrightnessToggle');
-                IPS_SetHidden($brightnessEnabledID, !$show);
-
-                if ($show && !$this->ReadPropertyBoolean('AllowUserBrightnessToggle')) {
-                    $this->DisableAction('BrightnessEnabled');
-                }
-            }
-
-            // Brightness threshold visibility
-            $brightnessThresholdID = @$this->GetIDForIdent('BrightnessThreshold');
-            if ($brightnessThresholdID) {
-                $show = $this->ReadPropertyBoolean('ShowBrightnessThreshold');
-                IPS_SetHidden($brightnessThresholdID, !$show);
-
-                if ($show && !$this->ReadPropertyBoolean('AllowUserBrightnessThreshold')) {
-                    $this->DisableAction('BrightnessThreshold');
-                }
-            }
-        }
-
-        // Light switches toggle visibility (independent of auto-off)
-        $enableSwitches = $this->ReadPropertyBoolean('EnableLightSwitches');
-        if ($enableSwitches) {
-            $switchesEnabledID = @$this->GetIDForIdent('SwitchesEnabled');
-            if ($switchesEnabledID) {
-                $show = $this->ReadPropertyBoolean('ShowSwitchesToggle');
-                IPS_SetHidden($switchesEnabledID, !$show);
-
-                if ($show && !$this->ReadPropertyBoolean('AllowUserSwitchesToggle')) {
-                    $this->DisableAction('SwitchesEnabled');
-                }
-            }
-        }
-
-        if (!$enableAutoOff) {
-            return;
-        }
-
-        // Auto-off toggle visibility
-        $autoOffEnabledID = @$this->GetIDForIdent('AutoOffEnabled');
-        if ($autoOffEnabledID) {
-            $show = $this->ReadPropertyBoolean('ShowAutoOffToggle');
-            IPS_SetHidden($autoOffEnabledID, !$show);
-
-            // Disable action if user not allowed to change
-            if ($show && !$this->ReadPropertyBoolean('AllowUserAutoOffToggle')) {
-                $this->DisableAction('AutoOffEnabled');
-            }
-        }
-
-        // Auto-off time visibility
-        $autoOffTimeID = @$this->GetIDForIdent('AutoOffTime');
-        if ($autoOffTimeID) {
-            $show = $this->ReadPropertyBoolean('ShowAutoOffTime');
-            IPS_SetHidden($autoOffTimeID, !$show);
-
-            // Disable action if user not allowed to change
-            if ($show && !$this->ReadPropertyBoolean('AllowUserAutoOffTime')) {
-                $this->DisableAction('AutoOffTime');
-            }
-        }
-
-        // Remaining time visibility
-        $remainingTimeID = @$this->GetIDForIdent('RemainingTime');
-        if ($remainingTimeID) {
-            IPS_SetHidden($remainingTimeID, !$this->ReadPropertyBoolean('ShowRemainingTime'));
-        }
-
-        // Extend button visibility
-        $extendTimerID = @$this->GetIDForIdent('ExtendTimer');
-        if ($extendTimerID) {
-            $show = $this->ReadPropertyBoolean('ShowExtendButton');
-            IPS_SetHidden($extendTimerID, !$show);
-
-            // Disable action if user not allowed
-            if ($show && !$this->ReadPropertyBoolean('AllowUserExtend')) {
-                $this->DisableAction('ExtendTimer');
-            }
-        }
-
-        // Notification toggle visibility
-        $notificationsEnabledID = @$this->GetIDForIdent('NotificationsEnabled');
-        if ($notificationsEnabledID) {
-            $show = $this->ReadPropertyBoolean('ShowNotificationToggle');
-            IPS_SetHidden($notificationsEnabledID, !$show);
-
-            // Disable action if user not allowed to change
-            if ($show && !$this->ReadPropertyBoolean('AllowUserNotificationToggle')) {
-                $this->DisableAction('NotificationsEnabled');
-            }
-        }
-
-        // Notification threshold visibility
-        $notificationThresholdID = @$this->GetIDForIdent('NotificationThreshold');
-        if ($notificationThresholdID) {
-            $show = $this->ReadPropertyBoolean('ShowNotificationThreshold');
-            IPS_SetHidden($notificationThresholdID, !$show);
-
-            // Disable action if user not allowed to change
-            if ($show && !$this->ReadPropertyBoolean('AllowUserNotificationThreshold')) {
-                $this->DisableAction('NotificationThreshold');
             }
         }
     }

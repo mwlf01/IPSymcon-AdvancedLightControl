@@ -19,11 +19,9 @@ Ein leistungsstarkes IP-Symcon-Modul zur zentralen Steuerung mehrerer Lichter mi
   - [Lichtschalter](#lichtschalter)
   - [Präsenzerkennung](#präsenzerkennung)
   - [Helligkeitssteuerung](#helligkeitssteuerung)
-  - [Automatische Abschaltung](#automatische-abschaltung)
+  - [Benachrichtigungen](#benachrichtigungen)
   - [Kachel-Visualisierungen](#kachel-visualisierungen)
-  - [Sichtbarkeit in Visualisierung](#sichtbarkeit-in-visualisierung)
-  - [Benutzerberechtigungen](#benutzerberechtigungen)
-- [Visualisierung](#visualisierung)
+- [Variablen](#variablen)
 - [PHP-Funktionen](#php-funktionen)
 - [Lizenz](#lizenz)
 
@@ -52,10 +50,9 @@ Ein leistungsstarkes IP-Symcon-Modul zur zentralen Steuerung mehrerer Lichter mi
   - Benachrichtigungen vor Abschaltung über Kachel-Visualisierung
   - Anpassbarer Lichtname und Standort in Benachrichtigungen
   - Unterstützung mehrerer Kachel-Visualisierungen
-- **Flexible Sichtbarkeit & Berechtigungen**:
-  - Einzelne Steuerelemente in der Visualisierung ein-/ausblenden
-  - Pro-Funktion Benutzerberechtigungen
-  - Bedingte Variablen (nur erstellt wenn Funktion aktiviert)
+- **Benutzergesteuerte Funktionen**:
+  - Alle Funktionen können vom Benutzer über Variablen in der Visualisierung aktiviert/deaktiviert werden
+  - Alle Einstellungen zur Laufzeit änderbar ohne Konfigurationsänderungen
 
 ---
 
@@ -120,7 +117,6 @@ Physische Schalter zur Lichtsteuerung verbinden:
 
 | Einstellung | Beschreibung |
 |-------------|--------------|
-| **Lichtschalter aktivieren** | Lichtschalter-Funktion ein-/ausschalten |
 | **Schaltmodus** | Wie Schalter interpretiert werden (siehe unten) |
 | **Schalter-Variable** | Boolesche Variable eines Schalters auswählen |
 | **Name** | Optionaler Anzeigename zur Identifikation |
@@ -130,15 +126,15 @@ Physische Schalter zur Lichtsteuerung verbinden:
 - **Umschalten bei jeder Änderung**: Jede Zustandsänderung schaltet um
 - **Nur Einschalten (Treppenhauslicht)**: Schaltet nur ein (nützlich mit Auto-Off)
 
+**Hinweis:** Aktivieren/Deaktivieren der Lichtschalter über die Variable "Lichtschalter" in der Visualisierung.
+
 ### Präsenzerkennung
 
-Automatische Lichtsteuerung basierend auf Präsenz:
+Präsenzmelder für automatische Lichtsteuerung konfigurieren:
 
-| Einstellung | Beschreibung | Standard |
-|-------------|--------------|----------|
-| **Präsenzerkennung aktivieren** | Präsenzbasierte Steuerung ein-/ausschalten | Aus |
-| **Präsenzmelder** | Liste der booleschen Präsenzmelder-Variablen | - |
-| **Nachlaufzeit (s)** | Sekunden nach Präsenzende bis zum Ausschalten | 60 |
+| Einstellung | Beschreibung |
+|-------------|--------------|
+| **Präsenzmelder** | Liste der booleschen Präsenzmelder-Variablen |
 
 **Verhalten:**
 - Licht schaltet ein, wenn EIN Melder Präsenz meldet (ODER-Logik)
@@ -146,30 +142,26 @@ Automatische Lichtsteuerung basierend auf Präsenz:
 - Manuelles Einschalten wird separat verfolgt (Präsenz schaltet manuell aktiviertes Licht nicht aus)
 - Nach Auto-Off muss Präsenz erst enden, bevor sie wieder einschalten kann
 
+**Hinweis:** Aktivieren/Deaktivieren und Nachlaufzeit über Variablen in der Visualisierung einstellen.
+
 ### Helligkeitssteuerung
 
-Licht nur einschalten, wenn es dunkel genug ist:
+Helligkeitssensor konfigurieren:
 
-| Einstellung | Beschreibung | Standard |
-|-------------|--------------|----------|
-| **Helligkeitssteuerung aktivieren** | Helligkeitsbasierte Steuerung ein-/ausschalten | Aus |
-| **Helligkeitssensor-Variable** | Integer- oder Float-Variable mit Lux-Wert | - |
-| **Helligkeitsschwelle (Lux)** | Licht schaltet nur unter diesem Wert ein | 100 |
+| Einstellung | Beschreibung |
+|-------------|--------------|
+| **Helligkeitssensor-Variable** | Integer- oder Float-Variable mit Lux-Wert |
 
-### Automatische Abschaltung
+**Hinweis:** Aktivieren/Deaktivieren und Schwellwert über Variablen in der Visualisierung einstellen.
 
-Automatische Abschaltung konfigurieren:
+### Benachrichtigungen
 
-| Einstellung | Beschreibung | Standard |
-|-------------|--------------|----------|
-| **Automatische Abschaltung aktivieren** | Gesamte Auto-Off-Funktionalität ein-/ausschalten | Aus |
-| **Abschaltzeit (s)** | Zeit in Sekunden bis zur automatischen Abschaltung (1-172800) | 300 |
-| **Push-Benachrichtigungen aktivieren** | Benachrichtigungen vor Abschaltung senden | Aus |
-| **Benachrichtigungsschwelle (s)** | Sekunden vor Abschaltung für Benachrichtigung | 60 |
-| **Lichtname** | Name für Push-Benachrichtigungen (z.B. "Deckenlampe") | - |
-| **Standort** | Standort für Push-Benachrichtigungen (z.B. "Wohnzimmer") | - |
+Benachrichtigungseinstellungen für Auto-Off-Warnungen konfigurieren:
 
-**Hinweis**: Automatische Abschaltung hat Priorität vor Präsenzerkennung. Nach Abschaltung muss Präsenz erst enden, bevor sie wieder einschalten kann.
+| Einstellung | Beschreibung |
+|-------------|--------------|
+| **Lichtname** | Name für Push-Benachrichtigungen (z.B. "Deckenlampe") |
+| **Standort** | Standort für Push-Benachrichtigungen (z.B. "Wohnzimmer") |
 
 ### Kachel-Visualisierungen
 
@@ -181,76 +173,41 @@ Kachel-Visualisierungs-Instanzen für Push-Benachrichtigungen registrieren:
 
 Sie können mehrere Kachel-Visualisierungen registrieren. Alle registrierten Visualisierungen erhalten Push-Benachrichtigungen, wenn die Restzeit unter den konfigurierten Schwellwert fällt.
 
-### Sichtbarkeit in Visualisierung
-
-Steuern, welche Elemente in der Visualisierung sichtbar sind:
-
-| Einstellung | Beschreibung |
-|-------------|--------------|
-| **Hauptschalter anzeigen** | Haupt-Ein/Aus-Schalter anzeigen |
-| **Lichtschalter-Umschalter anzeigen** | Schalter-Aktivierung anzeigen |
-| **Präsenz-Umschalter anzeigen** | Präsenzerkennung-Umschalter anzeigen |
-| **Präsenz-Nachlaufzeit anzeigen** | Nachlaufzeit-Einstellung anzeigen |
-| **Helligkeits-Umschalter anzeigen** | Helligkeitssteuerung-Umschalter anzeigen |
-| **Helligkeitsschwelle anzeigen** | Helligkeitsschwelle-Einstellung anzeigen |
-| **Abschaltungs-Umschalter anzeigen** | Auto-Off-Umschalter anzeigen |
-| **Abschaltzeit anzeigen** | Timeout-Konfiguration anzeigen |
-| **Restzeit anzeigen** | Countdown-Timer anzeigen |
-| **Timer-Verlängerung anzeigen** | Timer-Reset-Button anzeigen |
-| **Benachrichtigungs-Umschalter anzeigen** | Benachrichtigungs-Umschalter anzeigen |
-| **Benachrichtigungsschwelle anzeigen** | Benachrichtigungsschwelle-Einstellung anzeigen |
-
-### Benutzerberechtigungen
-
-Steuern, was Benutzer über die Visualisierung ändern können:
-
-| Einstellung | Beschreibung |
-|-------------|--------------|
-| **Lichtschalter umschalten erlauben** | Benutzer können Lichtschalter aktivieren/deaktivieren |
-| **Präsenz umschalten erlauben** | Benutzer können Präsenzerkennung aktivieren/deaktivieren |
-| **Helligkeit umschalten erlauben** | Benutzer können Helligkeitssteuerung aktivieren/deaktivieren |
-| **Helligkeitsschwelle ändern erlauben** | Benutzer können Helligkeitsschwelle anpassen |
-| **Abschaltung umschalten erlauben** | Benutzer können Auto-Off ein-/ausschalten |
-| **Abschaltzeit ändern erlauben** | Benutzer können Timeout anpassen |
-| **Timer verlängern erlauben** | Benutzer können Timer zurücksetzen/verlängern |
-| **Benachrichtigungen umschalten erlauben** | Benutzer können Benachrichtigungen ein-/ausschalten |
-| **Benachrichtigungsschwelle ändern erlauben** | Benutzer können Benachrichtigungsschwelle anpassen |
-
-Wenn eine Berechtigung deaktiviert ist, ist das Steuerelement sichtbar aber schreibgeschützt.
-
-**Hinweis:** Benutzeränderungen über die Visualisierung werden automatisch in die Instanzkonfiguration zurückgeschrieben. Das bedeutet, Änderungen bleiben erhalten und gehen nicht verloren, wenn der Administrator andere Konfigurationsänderungen vornimmt.
-
 ---
 
-## Visualisierung
+## Variablen
 
-Das Modul erstellt folgende Variablen (bedingt basierend auf aktivierten Funktionen):
+Das Modul erstellt folgende Variablen (alle immer verfügbar):
 
 | Variable | Typ | Beschreibung |
 |----------|-----|--------------|
 | **Alle Lichter** | Boolean | Hauptschalter für alle Lampen |
-| **Lichtschalter aktiviert** | Boolean | Umschalter für Lichtschalter-Funktion |
-| **Präsenz aktiviert** | Boolean | Umschalter für Präsenzerkennung |
-| **Präsenz-Nachlaufzeit** | Integer | Sekunden nach Präsenzende |
-| **Helligkeit aktiviert** | Boolean | Umschalter für Helligkeitssteuerung |
-| **Helligkeitsschwelle** | Integer | Lux-Schwellwert für Präsenzaktivierung |
-| **Abschaltung aktiviert** | Boolean | Umschalter für Auto-Off-Funktion |
-| **Abschaltzeit** | Integer | Timeout in Sekunden |
+| **Lichtschalter** | Boolean | Lichtschalter-Funktion aktivieren/deaktivieren |
+| **Präsenzerkennung** | Boolean | Präsenzerkennung aktivieren/deaktivieren |
+| **Präsenz-Nachlaufzeit** | Integer | Sekunden nach Präsenzende (Standard: 60) |
+| **Helligkeitssteuerung** | Boolean | Helligkeitssteuerung aktivieren/deaktivieren |
+| **Helligkeitsschwelle** | Integer | Lux-Schwellwert für Präsenzaktivierung (Standard: 100) |
+| **Automatische Abschaltung** | Boolean | Auto-Off-Funktion aktivieren/deaktivieren |
+| **Abschaltzeit** | Integer | Timeout in Sekunden (Standard: 300) |
 | **Restzeit** | Integer | Countdown-Anzeige |
 | **Timer verlängern** | Integer (Button) | Timer zurücksetzen/verlängern |
-| **Benachrichtigungen aktiviert** | Boolean | Umschalter für Push-Benachrichtigungen |
-| **Benachrichtigungsschwelle** | Integer | Sekunden vor Abschaltung für Benachrichtigung |
+| **Benachrichtigungen** | Boolean | Push-Benachrichtigungen aktivieren/deaktivieren |
+| **Benachrichtigung vor** | Integer | Sekunden vor Abschaltung für Benachrichtigung (Standard: 60) |
+
+Alle Funktions-Umschalter sind standardmäßig deaktiviert. Benutzer können Funktionen aktivieren/deaktivieren und Einstellungen direkt über die Visualisierung ändern, ohne Zugriff auf die Instanzkonfiguration zu benötigen.
 
 ### Push-Benachrichtigungen
 
-Bei Konfiguration mit Kachel-Visualisierungen und aktivierten Push-Benachrichtigungen:
+Bei Konfiguration mit Kachel-Visualisierungen und aktivierten Benachrichtigungen:
 
 1. Licht schaltet ein (manuell, per Schalter oder durch Präsenz)
 2. Auto-Off-Timer beginnt herunterzuzählen
-3. Bei Erreichen der Benachrichtigungsschwelle wird eine Push-Benachrichtigung gesendet
+3. Bei Erreichen des "Benachrichtigung vor"-Schwellwerts wird eine Push-Benachrichtigung gesendet
 4. Benachrichtigung zeigt: **"Lichtname (Standort)"** - "Schaltet in X Sekunden ab. Tippen zum Verlängern."
 5. Benutzer kann die Benachrichtigung antippen um den Timer zu verlängern
 6. Ohne Verlängerung schaltet das Licht automatisch ab wenn der Timer Null erreicht
+
+**Hinweis**: Automatische Abschaltung hat Priorität vor Präsenzerkennung. Nach Abschaltung muss Präsenz erst enden, bevor sie wieder einschalten kann.
 
 ---
 
@@ -354,6 +311,15 @@ ALC_SetAutoOffEnabled(12345, false);
 ---
 
 ## Changelog
+
+### Version 2.0.0 (2026-01-17)
+- **Breaking Change**: Enable*-Checkboxen aus Instanzkonfiguration entfernt
+- Alle Variablen werden jetzt immer erstellt (keine bedingte Erstellung mehr)
+- Funktionen werden jetzt über Variablen in der Visualisierung aktiviert/deaktiviert
+- Sichtbarkeitseinstellungen entfernt (alle Variablen immer sichtbar)
+- Benutzerberechtigungen entfernt (alle Einstellungen benutzer-anpassbar)
+- Übersichtlichere Variablennamen (Suffix "aktiviert" bei Umschaltern entfernt)
+- "Benachrichtigungsschwelle" umbenannt zu "Benachrichtigung vor" für Klarheit
 
 ### Version 1.0.0 (2026-01-11)
 - Erstveröffentlichung
