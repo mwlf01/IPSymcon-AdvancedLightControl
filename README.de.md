@@ -1,6 +1,6 @@
 # AdvancedLightControl für IP-Symcon
 
-[![IP-Symcon Version](https://img.shields.io/badge/IP--Symcon-7.0+-blue.svg)](https://www.symcon.de)
+[![IP-Symcon Version](https://img.shields.io/badge/IP--Symcon-8.1+-blue.svg)](https://www.symcon.de)
 [![Lizenz](https://img.shields.io/badge/Lizenz-MIT-green.svg)](LICENSE)
 
 Ein leistungsstarkes IP-Symcon-Modul zur zentralen Steuerung mehrerer Lichter mit automatischer Abschaltung, Präsenzerkennung, Helligkeitssteuerung und Kachel-Visualisierungs-Integration.
@@ -58,7 +58,7 @@ Ein leistungsstarkes IP-Symcon-Modul zur zentralen Steuerung mehrerer Lichter mi
 
 ## Voraussetzungen
 
-- IP-Symcon 7.0 oder höher
+- IP-Symcon 8.1 oder höher
 - Gültiges IP-Symcon-Abonnement für Push-Benachrichtigungen (optional)
 
 ---
@@ -312,7 +312,7 @@ ALC_SetAutoOffEnabled(12345, false);
 
 ## Changelog
 
-### Version 2.0.0 (2026-01-17)
+### Version 2.0.0
 - **Breaking Change**: Enable*-Checkboxen aus Instanzkonfiguration entfernt
 - Alle Variablen werden jetzt immer erstellt (keine bedingte Erstellung mehr)
 - Funktionen werden jetzt über Variablen in der Visualisierung aktiviert/deaktiviert
@@ -321,7 +321,7 @@ ALC_SetAutoOffEnabled(12345, false);
 - Übersichtlichere Variablennamen (Suffix "aktiviert" bei Umschaltern entfernt)
 - "Benachrichtigungsschwelle" umbenannt zu "Benachrichtigung vor" für Klarheit
 
-### Version 1.0.0 (2026-01-11)
+### Version 1.0.0
 - Erstveröffentlichung
 - Gruppen-Lichtsteuerung mit Hauptschalter
 - Lichtschalter-Unterstützung mit drei Modi (Taster, Umschalten, Nur-Ein)

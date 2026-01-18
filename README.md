@@ -1,6 +1,6 @@
 # AdvancedLightControl for IP-Symcon
 
-[![IP-Symcon Version](https://img.shields.io/badge/IP--Symcon-7.0+-blue.svg)](https://www.symcon.de)
+[![IP-Symcon Version](https://img.shields.io/badge/IP--Symcon-8.1+-blue.svg)](https://www.symcon.de)
 [![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 
 A powerful IP-Symcon module for centralized control of multiple lights with automatic switch-off, presence detection, brightness control, and Tile Visualization integration.
@@ -58,7 +58,7 @@ A powerful IP-Symcon module for centralized control of multiple lights with auto
 
 ## Requirements
 
-- IP-Symcon 7.0 or higher
+- IP-Symcon 8.1 or higher
 - Valid IP-Symcon subscription for push notifications (optional)
 
 ---
@@ -328,7 +328,7 @@ ALC_CountdownTick(int $InstanceID);
 
 ## Changelog
 
-### Version 2.0.0 (2026-01-17)
+### Version 2.0.0
 - **Breaking Change**: Removed Enable* checkboxes from instance configuration
 - All variables are now always created (no conditional creation)
 - Features are now enabled/disabled via variables in the visualization
@@ -337,7 +337,7 @@ ALC_CountdownTick(int $InstanceID);
 - Cleaner variable names (removed "Enabled" suffix from toggle variables)
 - Renamed "Notification Threshold" to "Notify Before" for clarity
 
-### Version 1.0.0 (2026-01-11)
+### Version 1.0.0
 - Initial release
 - Group light control with master switch
 - Light switch support with three modes (push-button, toggle, on-only)
