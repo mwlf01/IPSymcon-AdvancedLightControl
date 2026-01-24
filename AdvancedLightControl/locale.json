@@ -1,6 +1,9 @@
 {
     "translations": {
         "de": {
+            "Advanced Light Control": "Erweiterte Lichtsteuerung",
+            "Group Light Switch": "Gruppen-Lichtschalter",
+            "Light Group": "Lichtgruppe",
             "Lamps": "Lampen",
             "Boolean Variables (Lamps)": "Boolesche Variablen (Lampen)",
             "Lamp Variable": "Lampen-Variable",

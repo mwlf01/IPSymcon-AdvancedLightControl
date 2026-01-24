@@ -5,10 +5,8 @@
     "vendor": "",
     "aliases": [
         "Advanced Light Control",
-        "Erweiterte Lichtsteuerung",
         "Group Light Switch",
-        "Gruppen-Lichtschalter",
-        "Lichtgruppe"
+        "Light Group"
     ],
     "parentRequirements": [],
     "childRequirements": [],
