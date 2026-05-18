@@ -1,9 +1,22 @@
 <?php
+
+/*
+ * AdvancedLightControl for IP-Symcon
+ *
+ * SPDX-License-Identifier: EUPL-1.2
+ * Copyright (c) 2026 mwlf01
+ *
+ * Licensed under the EUPL, Version 1.2. See the LICENSE file for the full text.
+ */
+
 declare(strict_types=1);
 
 class AdvancedLightControl extends IPSModule
 {
-    private const VM_UPDATE = 10603;
+    // Grace period in seconds after SwitchAll, during which incoming lamp state updates
+    // that contradict the intended master state are ignored. Prevents UI flicker when
+    // actuators (KNX, Z-Wave, EnOcean, ...) report state changes asynchronously.
+    private const SWITCH_GRACE_SECONDS = 3;
 
     /* ================= Lifecycle ================= */
     public function Create()
@@ -44,7 +57,8 @@ class AdvancedLightControl extends IPSModule
         $this->RegisterAttributeBoolean('AutoOffTriggered', false);
         $this->RegisterAttributeBoolean('ManualSwitchOn', false);
         $this->RegisterAttributeBoolean('PresenceWasActiveOnManualSwitch', false);
-        $this->RegisterAttributeBoolean('PushButtonState', false); // For push-button mode: false=next push turns on, true=next push turns off
+        $this->RegisterAttributeBoolean('IntendedMasterState', false);
+        $this->RegisterAttributeInteger('IntendedUntil', 0);
     }
 
     public function ApplyChanges()
@@ -374,12 +388,22 @@ class AdvancedLightControl extends IPSModule
     {
         switch ($Ident) {
             case 'MasterSwitch':
-                $this->SwitchAll((bool)$Value);
+                $current = (bool)@GetValue($this->GetIDForIdent('MasterSwitch'));
+                if ($current !== (bool)$Value) {
+                    $this->SwitchAll((bool)$Value);
+                }
                 break;
 
             case 'AutoOffEnabled':
-                SetValue($this->GetIDForIdent('AutoOffEnabled'), (bool)$Value);
-                if (!(bool)$Value) {
+                $enabled = (bool)$Value;
+                SetValue($this->GetIDForIdent('AutoOffEnabled'), $enabled);
+                if ($enabled) {
+                    // Start timer immediately if lights are currently on
+                    $masterID = $this->GetIDForIdent('MasterSwitch');
+                    if ($masterID && (bool)@GetValue($masterID)) {
+                        $this->armAutoOffTimer();
+                    }
+                } else {
                     $this->stopTimer();
                 }
                 break;
@@ -417,7 +441,7 @@ class AdvancedLightControl extends IPSModule
                 break;
 
             case 'BrightnessThreshold':
-                $val = max(0, (int)$Value);
+                $val = max(1, (int)$Value);
                 SetValue($this->GetIDForIdent('BrightnessThreshold'), $val);
                 break;
 
@@ -433,7 +457,7 @@ class AdvancedLightControl extends IPSModule
     /* ================= Message Sink ================= */
     public function MessageSink($TimeStamp, $SenderID, $Message, $Data)
     {
-        if ($Message !== self::VM_UPDATE) {
+        if ($Message !== VM_UPDATE) {
             return;
         }
 
@@ -488,16 +512,33 @@ class AdvancedLightControl extends IPSModule
      */
     public function SwitchAll(bool $State, bool $ByPresence = false, bool $ByAutoOff = false): void
     {
+        // Set intended state and grace period BEFORE issuing RequestActions, so any
+        // synchronous MessageSink callbacks already see the intended state.
+        $this->WriteAttributeBoolean('IntendedMasterState', $State);
+        $this->WriteAttributeInteger('IntendedUntil', time() + self::SWITCH_GRACE_SECONDS);
+
         $lamps = $this->getLamps();
+        $skippedLamps = [];
 
         foreach ($lamps as $lamp) {
             $lampID = (int)$lamp['LampID'];
             if ($lampID > 0 && @IPS_VariableExists($lampID)) {
                 $current = (bool)@GetValue($lampID);
                 if ($current !== $State) {
-                    @RequestAction($lampID, $State);
+                    if (HasAction($lampID)) {
+                        @RequestAction($lampID, $State);
+                    } else {
+                        $skippedLamps[] = $lampID;
+                    }
                 }
             }
+        }
+
+        if (!empty($skippedLamps)) {
+            $this->LogMessage(
+                'Cannot switch the following lamp variables (no action available): ' . implode(', ', $skippedLamps),
+                KL_WARNING
+            );
         }
 
         SetValue($this->GetIDForIdent('MasterSwitch'), $State);
@@ -528,7 +569,6 @@ class AdvancedLightControl extends IPSModule
             }
             $this->WriteAttributeBoolean('ManualSwitchOn', false);
             $this->WriteAttributeBoolean('PresenceWasActiveOnManualSwitch', false);
-            $this->WriteAttributeBoolean('PushButtonState', false); // Reset push-button state when lights turn off
             $this->stopTimer();
             $this->SetTimerInterval('PresenceFollowUp', 0);
         }
@@ -599,7 +639,10 @@ class AdvancedLightControl extends IPSModule
         // Check notification threshold
         if ($this->areNotificationsEnabled() && !$this->ReadAttributeBoolean('NotificationSent')) {
             $threshold = $this->getNotificationThreshold();
-            if ($remaining > 0 && $remaining <= $threshold) {
+            $autoOffTime = $this->getAutoOffTime();
+            // Only send if threshold is a strict subset of the auto-off period.
+            // Otherwise the notification would fire instantly on the first tick.
+            if ($threshold < $autoOffTime && $remaining > 0 && $remaining <= $threshold) {
                 $this->sendNotifications($remaining);
                 $this->WriteAttributeBoolean('NotificationSent', true);
             }
@@ -615,7 +658,7 @@ class AdvancedLightControl extends IPSModule
      */
     public function SetAutoOffTime(int $Seconds): void
     {
-        $seconds = max(1, min(86400, $Seconds));
+        $seconds = max(1, min(172800, $Seconds));
         SetValue($this->GetIDForIdent('AutoOffTime'), $seconds);
     }
 
@@ -670,7 +713,7 @@ class AdvancedLightControl extends IPSModule
         foreach ($lamps as $lamp) {
             $lampID = (int)$lamp['LampID'];
             if ($lampID > 0) {
-                $this->RegisterMessage($lampID, self::VM_UPDATE);
+                $this->RegisterMessage($lampID, VM_UPDATE);
             }
         }
 
@@ -679,14 +722,14 @@ class AdvancedLightControl extends IPSModule
         foreach ($detectors as $detector) {
             $detectorID = (int)$detector['DetectorID'];
             if ($detectorID > 0) {
-                $this->RegisterMessage($detectorID, self::VM_UPDATE);
+                $this->RegisterMessage($detectorID, VM_UPDATE);
             }
         }
 
         // Register brightness sensor variable
         $brightnessSensorID = $this->ReadPropertyInteger('BrightnessSensor');
         if ($brightnessSensorID > 0 && @IPS_VariableExists($brightnessSensorID)) {
-            $this->RegisterMessage($brightnessSensorID, self::VM_UPDATE);
+            $this->RegisterMessage($brightnessSensorID, VM_UPDATE);
         }
 
         // Register light switch variables
@@ -694,7 +737,7 @@ class AdvancedLightControl extends IPSModule
         foreach ($switches as $switch) {
             $switchID = (int)$switch['SwitchID'];
             if ($switchID > 0) {
-                $this->RegisterMessage($switchID, self::VM_UPDATE);
+                $this->RegisterMessage($switchID, VM_UPDATE);
             }
         }
     }
@@ -721,6 +764,20 @@ class AdvancedLightControl extends IPSModule
             $id = (int)($detector['DetectorID'] ?? 0);
             return $id > 0 && @IPS_VariableExists($id);
         });
+    }
+
+    private function isAnyLampOn(): bool
+    {
+        $lamps = $this->getLamps();
+        foreach ($lamps as $lamp) {
+            $lampID = (int)$lamp['LampID'];
+            if ($lampID > 0 && @IPS_VariableExists($lampID)) {
+                if ((bool)@GetValue($lampID)) {
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 
     private function isAnyPresenceDetected(): bool
@@ -873,31 +930,28 @@ class AdvancedLightControl extends IPSModule
 
         // Get switch mode: 0=Push-button, 1=Toggle on change, 2=On-only
         $switchMode = $this->ReadPropertyInteger('SwitchMode');
-        $masterSwitch = @GetValue($this->GetIDForIdent('MasterSwitch'));
+
+        // Toggle relative to the real lamp state, not the master variable. The master
+        // can be out of sync with the actual lamps (lamp changed externally before the
+        // module's MessageSink subscription was active, lamp variable not reliably
+        // reporting, etc.). The user expects each switch event to flip the lights
+        // based on what is actually on.
+        $lightsOn = $this->isAnyLampOn();
 
         // $data[0] contains the new value of the variable
         $newValue = isset($data[0]) ? (bool)$data[0] : false;
 
         switch ($switchMode) {
             case 0: // Push-button mode
-                // Only react to true signals (button press)
+                // Only react to true signals (button press).
                 if ($newValue) {
-                    $pushState = $this->ReadAttributeBoolean('PushButtonState');
-                    if (!$pushState) {
-                        // Next push turns on
-                        $this->SwitchAll(true);
-                        $this->WriteAttributeBoolean('PushButtonState', true);
-                    } else {
-                        // Next push turns off
-                        $this->SwitchAll(false);
-                        $this->WriteAttributeBoolean('PushButtonState', false);
-                    }
+                    $this->SwitchAll(!$lightsOn);
                 }
                 break;
 
             case 1: // Toggle on any change
                 // Any change (true->false or false->true) toggles the lights
-                $this->SwitchAll(!$masterSwitch);
+                $this->SwitchAll(!$lightsOn);
                 break;
 
             case 2: // On-only (staircase lighting)
@@ -930,12 +984,55 @@ class AdvancedLightControl extends IPSModule
             }
         }
 
-        $masterSwitchID = @$this->GetIDForIdent('MasterSwitch');
-        if ($masterSwitchID) {
-            $current = (bool)@GetValue($masterSwitchID);
-            if ($current !== $anyOn) {
-                SetValue($masterSwitchID, $anyOn);
+        // Grace period: while a switch operation is in flight, ignore intermediate
+        // lamp states that contradict the intended master state. Prevents UI flicker
+        // when actuators respond asynchronously.
+        $intendedUntil = $this->ReadAttributeInteger('IntendedUntil');
+        $inOwnAction = false;
+        if (time() < $intendedUntil) {
+            $intended = $this->ReadAttributeBoolean('IntendedMasterState');
+            if ($anyOn !== $intended) {
+                return;
             }
+            // Intended state has been reached — the switch action is done. Clear the
+            // grace period so subsequent external changes are synchronized normally.
+            $this->WriteAttributeInteger('IntendedUntil', 0);
+            $inOwnAction = true;
+        }
+
+        $masterSwitchID = @$this->GetIDForIdent('MasterSwitch');
+        if (!$masterSwitchID) {
+            return;
+        }
+        $current = (bool)@GetValue($masterSwitchID);
+        if ($current === $anyOn) {
+            return;
+        }
+
+        SetValue($masterSwitchID, $anyOn);
+
+        // External state change: a lamp was switched without going through SwitchAll
+        // (e.g. directly via the lamp variable, a parallel script, or a hardware path
+        // that bypasses this module). Replay the relevant side-effects so timers and
+        // tracking stay consistent. Skipped when we caused the change ourselves —
+        // SwitchAll already handled them.
+        if ($inOwnAction) {
+            return;
+        }
+
+        if ($anyOn) {
+            $this->WriteAttributeBoolean('ManualSwitchOn', true);
+            $this->WriteAttributeBoolean('PresenceWasActiveOnManualSwitch', $this->isAnyPresenceDetected());
+            $this->WriteAttributeBoolean('AutoOffTriggered', false);
+            $this->SetTimerInterval('PresenceFollowUp', 0);
+            if ($this->isAutoOffActive()) {
+                $this->armAutoOffTimer();
+            }
+        } else {
+            $this->WriteAttributeBoolean('ManualSwitchOn', false);
+            $this->WriteAttributeBoolean('PresenceWasActiveOnManualSwitch', false);
+            $this->stopTimer();
+            $this->SetTimerInterval('PresenceFollowUp', 0);
         }
     }
 
@@ -975,7 +1072,9 @@ class AdvancedLightControl extends IPSModule
         $notificationThresholdID = @$this->GetIDForIdent('NotificationThreshold');
         if ($notificationThresholdID && @IPS_VariableExists($notificationThresholdID)) {
             $val = (int)@GetValue($notificationThresholdID);
-            if ($val > 0) {
+            // Variable is clamped to [1, 172800] by RequestAction. Only fall back
+            // if the variable holds a clearly invalid value (e.g. legacy data).
+            if ($val >= 1) {
                 return $val;
             }
         }
@@ -1010,24 +1109,13 @@ class AdvancedLightControl extends IPSModule
     }
 
     /**
-     * Initialize a variable with a default value only if it hasn't been set yet
+     * Set the initial value of a freshly created variable.
+     * Callers must guarantee that the variable did not exist prior to MaintainVariable.
      */
     private function initializeVariableDefault(string $ident, $defaultValue): void
     {
         $varID = @$this->GetIDForIdent($ident);
-        if (!$varID || !@IPS_VariableExists($varID)) {
-            return;
-        }
-
-        $variable = IPS_GetVariable($varID);
-        
-        // Check if this is a freshly created variable by looking at LastChange
-        // If LastChange equals creation time (within 1 second), initialize with default
-        $lastChange = $variable['VariableChanged'];
-        $created = $variable['VariableUpdated'];
-        
-        // If the variable has never been explicitly set (LastChange == 0 or equals creation)
-        if ($lastChange == 0 || abs($lastChange - $created) < 2) {
+        if ($varID && @IPS_VariableExists($varID)) {
             SetValue($varID, $defaultValue);
         }
     }

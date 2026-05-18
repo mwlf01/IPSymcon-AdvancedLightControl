@@ -1,7 +1,7 @@
 # AdvancedLightControl for IP-Symcon
 
 [![IP-Symcon Version](https://img.shields.io/badge/IP--Symcon-8.1+-blue.svg)](https://www.symcon.de)
-[![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
+[![License: EUPL-1.2](https://img.shields.io/badge/License-EUPL--1.2-blue.svg)](LICENSE)
 
 A powerful IP-Symcon module for centralized control of multiple lights with automatic switch-off, presence detection, brightness control, and Tile Visualization integration.
 
@@ -282,7 +282,7 @@ ALC_SetAutoOffTime(int $InstanceID, int $Seconds);
 
 **Parameters:**
 - `$InstanceID` - ID of the AdvancedLightControl instance
-- `$Seconds` - Timeout in seconds (1-86400)
+- `$Seconds` - Timeout in seconds (1-172800, i.e. up to 48 hours)
 
 **Example:**
 ```php
@@ -328,6 +328,21 @@ ALC_CountdownTick(int $InstanceID);
 
 ## Changelog
 
+### Version 2.2.0
+- **Licence change**: This project is now distributed under the European Union Public Licence (EUPL), Version 1.2, replacing the previous MIT licence. Existing copies of version 2.1.0 and earlier remain under MIT; the new licence applies to version 2.2.0 onwards.
+- **Bugfix**: When a lamp is switched on externally (e.g. directly via its variable or by a hardware path that bypasses this module), the auto-off timer now starts as expected and the activation is tracked as a manual switch-on. External deactivation now stops the auto-off timer accordingly.
+- **Bugfix**: External state changes (e.g. switching a lamp off locally) are now synchronized to the master switch immediately after the previous switch action has reached its intended state. Previously, the 3 second post-switch grace period could suppress legitimate external updates.
+- **Bugfix**: Light switches in Push-button and Toggle modes now toggle relative to the actual lamp state instead of the master switch variable. Previously, if a lamp was switched on externally while the master switch was still `false`, the next switch event would not turn the light off as expected.
+- **Bugfix**: `ALC_SetAutoOffTime` now accepts values up to 172800 seconds (48 hours), matching the UI and documentation
+- **Bugfix**: Auto-off timer now starts immediately when the feature is enabled while lights are already on
+- **Bugfix**: Master switch no longer flickers when lamp actuators report state changes asynchronously (3 second grace period after each switch operation)
+- **Bugfix**: Push notifications are no longer triggered instantly when the notification threshold is configured higher than the auto-off time
+- **Bugfix**: Tapping the master switch while already in the target state is now a no-op and no longer resets the auto-off timer unexpectedly
+- **Bugfix**: Push-button mode now toggles relative to the actual master state, preventing desynchronization after external changes
+- **Bugfix**: Brightness threshold is now clamped to a minimum of 1 lux, eliminating the ambiguous "threshold = 0" case
+- **Improvement**: Lamp variables without an available action are now reported in the IP-Symcon log instead of silently failing
+- **Cleanup**: Removed redundant `VM_UPDATE` constant in favor of the system-provided constant
+
 ### Version 2.1.0
 - **Bugfix**: Configuration changes (e.g., adding a lamp) no longer reset variable values set by the user
 - **Bugfix**: Active timers and operational state (auto-off countdown, push-button state, etc.) are preserved across configuration changes
@@ -367,7 +382,11 @@ For issues, feature requests, or contributions, please visit:
 
 ## License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+This project is licensed under the **European Union Public Licence (EUPL) v. 1.2** — see the [LICENSE](LICENSE) file for the full text.
+
+The EUPL is a copyleft licence: derivative works that are distributed must also be released under the EUPL or a compatible licence (e.g. GPL, AGPL, MPL, LGPL — see the appendix of the EUPL for the full compatibility list). Earlier releases up to version 2.1.0 remain available under the previous MIT licence.
+
+The EUPL is published in 24 official language versions, all legally equivalent. Other language versions are available on the [official EU page](https://interoperable-europe.ec.europa.eu/collection/eupl/eupl-text-eupl-12).
 
 ---
 

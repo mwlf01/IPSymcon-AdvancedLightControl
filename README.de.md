@@ -1,11 +1,11 @@
 # AdvancedLightControl für IP-Symcon
 
 [![IP-Symcon Version](https://img.shields.io/badge/IP--Symcon-8.1+-blue.svg)](https://www.symcon.de)
-[![Lizenz](https://img.shields.io/badge/Lizenz-MIT-green.svg)](LICENSE)
+[![Lizenz: EUPL-1.2](https://img.shields.io/badge/Lizenz-EUPL--1.2-blue.svg)](LICENSE)
 
 Ein leistungsstarkes IP-Symcon-Modul zur zentralen Steuerung mehrerer Lichter mit automatischer Abschaltung, Präsenzerkennung, Helligkeitssteuerung und Kachel-Visualisierungs-Integration.
 
-**[English version](README.md)**
+**[English Version](README.md)**
 
 ---
 
@@ -282,7 +282,7 @@ ALC_SetAutoOffTime(int $InstanceID, int $Seconds);
 
 **Parameter:**
 - `$InstanceID` - ID der AdvancedLightControl-Instanz
-- `$Seconds` - Timeout in Sekunden (1-86400)
+- `$Seconds` - Timeout in Sekunden (1-172800, also bis zu 48 Stunden)
 
 **Beispiel:**
 ```php
@@ -311,6 +311,21 @@ ALC_SetAutoOffEnabled(12345, false);
 ---
 
 ## Changelog
+
+### Version 2.2.0
+- **Lizenzwechsel**: Das Projekt steht ab dieser Version unter der European Union Public Licence (EUPL), Version 1.2, anstelle der bisherigen MIT-Lizenz. Vorhandene Kopien der Versionen 2.1.0 und älter bleiben weiterhin unter der MIT-Lizenz; die neue Lizenz gilt ab Version 2.2.0.
+- **Bugfix**: Wird eine Lampe extern eingeschaltet (z. B. direkt über ihre Variable oder über einen Hardware-Pfad, der das Modul umgeht), startet die automatische Abschaltung nun wie erwartet, und die Aktivierung wird als manuelle Einschaltung erfasst. Externe Deaktivierungen stoppen den Auto-Off-Timer entsprechend.
+- **Bugfix**: Externe Zustandsänderungen (z. B. Lampe vor Ort ausschalten) werden nun unmittelbar mit dem Hauptschalter synchronisiert, sobald die vorherige Schaltaktion ihren Zielzustand erreicht hat. Zuvor konnte die 3-Sekunden-Karenzzeit nach einer Schaltaktion legitime externe Updates unterdrücken.
+- **Bugfix**: Lichtschalter im Taster- und Toggle-Modus orientieren sich nun am tatsächlichen Zustand der Lampen statt am Hauptschalter. War eine Lampe extern eingeschaltet worden, während der Hauptschalter noch auf `false` stand, hat das nächste Schalterereignis das Licht zuvor nicht wie erwartet ausgeschaltet.
+- **Bugfix**: `ALC_SetAutoOffTime` akzeptiert nun Werte bis 172800 Sekunden (48 Stunden), konsistent mit UI und Dokumentation
+- **Bugfix**: Der Auto-Off-Timer startet jetzt sofort, wenn das Feature aktiviert wird und die Lampen bereits an sind
+- **Bugfix**: Der Hauptschalter flackert nicht mehr, wenn Aktoren ihre Zustandsänderungen verzögert melden (3 Sekunden Karenzzeit nach jedem Schaltvorgang)
+- **Bugfix**: Push-Benachrichtigungen werden nicht mehr sofort ausgelöst, wenn die Benachrichtigungsschwelle höher als die Auto-Off-Zeit konfiguriert ist
+- **Bugfix**: Den Hauptschalter im aktuellen Zustand erneut zu betätigen ist nun ein No-Op und setzt nicht mehr unerwartet den Auto-Off-Timer zurück
+- **Bugfix**: Der Taster-Modus richtet sich jetzt am tatsächlichen Hauptschalter-Zustand aus, um Desynchronisation nach externen Änderungen zu vermeiden
+- **Bugfix**: Die Helligkeitsschwelle ist nun auf mindestens 1 Lux begrenzt, der mehrdeutige Fall „Schwelle = 0" entfällt
+- **Verbesserung**: Lampen-Variablen ohne verfügbare Aktion werden jetzt im IP-Symcon-Log gemeldet, statt stillschweigend zu fehlen
+- **Aufräumen**: Redundante `VM_UPDATE`-Konstante zugunsten der System-Konstante entfernt
 
 ### Version 2.1.0
 - **Bugfix**: Konfigurationsänderungen (z.B. Hinzufügen einer Lampe) setzen die vom Benutzer gesetzten Variablenwerte nicht mehr zurück
@@ -351,9 +366,11 @@ Bei Problemen, Funktionswünschen oder Beiträgen besuchen Sie bitte:
 
 ## Lizenz
 
-Dieses Projekt ist unter der MIT-Lizenz lizenziert - siehe [LICENSE](LICENSE) Datei für Details.
+Dieses Projekt steht unter der **European Union Public Licence (EUPL) v. 1.2** — siehe die [LICENSE](LICENSE)-Datei für den vollständigen Lizenztext.
 
-Die MIT-Lizenz erlaubt die freie Nutzung, Modifikation und Weitergabe der Software, sowohl für private als auch kommerzielle Zwecke, unter der Bedingung, dass der Urheberrechtshinweis und die Lizenz beibehalten werden.
+Die EUPL ist eine Copyleft-Lizenz: abgeleitete Werke, die weitergegeben werden, müssen ebenfalls unter der EUPL oder einer kompatiblen Lizenz veröffentlicht werden (z. B. GPL, AGPL, MPL, LGPL — die vollständige Kompatibilitätsliste steht im Anhang der EUPL). Frühere Releases bis Version 2.1.0 bleiben weiterhin unter der zuvor genutzten MIT-Lizenz verfügbar.
+
+Die EUPL wird in 24 offiziellen Sprachfassungen veröffentlicht, die rechtlich alle gleichwertig sind. Die Lizenz kann in anderen Sprachen auf der [offiziellen EU-Seite](https://interoperable-europe.ec.europa.eu/collection/eupl/eupl-text-eupl-12) eingesehen werden.
 
 ---
 

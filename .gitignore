@@ -1,6 +1,21 @@
+# OS files
 .DS_Store
 Thumbs.db
-*.log
+Desktop.ini
+
+# IDE / Editor
 .idea/
 .vscode/
+*.sublime-project
+*.sublime-workspace
+*.swp
+*.swo
+
+# Logs
+*.log
+
+# Temporary files
+*.tmp
+*.temp
 *.bak
+*~
